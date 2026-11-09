@@ -1,0 +1,152 @@
+﻿FEASIBILITY TESTS SUMMARY ASSIGNMENT 
+
+
+This document outlines your findings for your Feasibility Testing Stage for your Capstone Project Proposal in Research Methods and Professional Practice (RMPP). 
+
+Be clear and brief in your responses. 
+
+
+Duplicate this document and save it to your own Drive for editing (then remove these highlighted instructions) . Please allow permission for editing/commenting in your copy of this document.
+
+
+________________
+
+
+
+
+
+
+Student Name(s): 
+Student Email(s):
+
+
+
+
+
+
+What is your proposed project / domain & problem you are designing around?
+
+
+
+
+
+
+What type of project is your proposed Capstone project? 
+(For example, a game, a mobile app, a website, a wearable device, an interactive data visualization, interactive sculpture or  installation, etc)
+
+
+
+
+What technology or technologies does your project rely on? Be specific:
+
+
+
+
+
+
+List each type of feasibility test you ran here (we expect a minimum of three, including a test for each technology). If you are in a group, Add who did which tests here:
+
+
+1.
+2.
+3.
+4. 
+5. 
+6. 
+
+
+
+
+Feasibility Test 1 [Insert Title of Test Here] Documentation:
+Include a short 1-2 sentence description of the test and any relevant notes about this test. Add captions to photos. Be as visual as possible with your documentation.
+
+
+
+
+
+
+Feasibility Test 2 [Insert Title of Test Here] Documentation:
+Include a short 1-2 sentence description of the test and any relevant notes about this test. Add captions to photos. Be as visual as possible with your documentation.
+
+
+
+
+
+
+ 
+Feasibility Test 3 [Insert Title of Test Here] Documentation:
+Include a short 1-2 sentence description of the test and any relevant notes about this test. Add captions to photos. Be as visual as possible with your documentation.
+
+
+
+
+
+
+
+
+
+
+Continue on with 4, 5, 6,... however many you completed. 
+
+
+
+
+
+
+
+
+________________
+
+
+Feasibility Test Findings
+Copy these next two questions & answers into your proposal
+
+
+What was surprising / unexpected?
+
+
+
+
+
+
+
+
+
+
+How will you move forward with your findings? How will this affect your Capstone?
+
+
+
+
+
+
+________________
+
+
+Feasibility Test Types:
+Required Feasibility Tests:
+* Technical Tests - What specific technologies does your project rely on? Test each one. For example, if your project requires an API, make sure you can pull from that API. If it requires Unity, create a small proof-of-concept in Unity. If it involves physical computing, create a working circuit and code with the sensors, motors, or blinky things you need.  Bottom line: prove you are capable of using the tech you are proposing for your project.
+* Interview / Audience Tests - Does the problem/experience exist? What is the problem or experience the audience member is currently dealing with? What are they currently doing to deal with the described problem or experience? Could include interviews, surveys, observations (formal or informal).  For artworks that are not answering a “specific problem”, meet with external experts to share the larger questions / specific experience you are designing and get feedback.
+
+* Full Project Renderings: All project proposals require full project renderings. Examples include a 3D model of a proposed installation, an illustration of a product, an animatic / still from a scene in your project. Show us, don’t tell us what your project could look like.
+ 
+More Types of Feasibility Tests:
+   * Design Tests - Do some basic competitive design analysis, and create appropriate design elements to show us what you are considering. Examples could include a mood board that shares a color palette, typefaces, UI elements etc. 
+   * Materials Tests - If you are proposing a physical project such as a product or sculpture, what materials work best for your concept?  Get your hands on potential materials to see what will work for your concept.
+   * Storytelling Tests - If any part of your project requires storytelling, demonstrate that you know the outline and content of your story and draft it.
+   * Game Tests - If you're building a game, test various aspects of your proposed game mechanics by building out something others can try.
+   * Human Experience (HX/UX) Tests - Rough simulation of your proposed experience, observe, and solicit feedback. This could include paper prototypes, it could include testing with wireframes, it could include mock-ups, or models for people to use. Could include low to high fidelity interactive prototypes for testing.
+   * ETC - There are so many types of tests out there that might be specific to your project. If you’re not sure, look at the list below to determine if there is a test type not listed here that would help determine the feasibility of your project.
+
+
+These tests should help answer specific questions about your idea, for instance:
+   * Does the technology exist to even make this happen? How accessible is it for you to work with?
+   * Do you have the skills to utilize the tools / technologies necessary in the given time?
+   * What could the interface / design look like?
+   * What does it look like to walk through the interaction with the project?
+   * Is what you are designing speaking directly to the needs of the person/people you are designing for?
+   * Will the parts of your project you are testing function the way you intend? Will you need to rethink the functionality / UX of that design once you get feedback?
+
+
+See the Feasibility Testing Assignment in Canvas for more details.
+________________

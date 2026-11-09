@@ -1,0 +1,9 @@
+.DS_Store
+Thumbs.db
+node_modules/
+.env
+
+# Uncomment to keep large media out of git:
+# Media/animations-2026-10-28/*.mp4
+# Media/animations-2026-10-28/*.gif
+# Media/renderings-2026-11-04/
