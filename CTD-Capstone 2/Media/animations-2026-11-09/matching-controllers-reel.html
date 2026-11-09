@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Living Ecosystem: matching controllers reel</title>
+<!--
+  Video reel of the "matching controllers, one element each" variations (Nov 9, 2026).
+  Illustrative mockup, not a working prototype. Single file, no dependencies.
+  - Plays as a ~2.5 min reel, one scene per variation. Chapter buttons jump to a scene.
+  - "Record video" saves one full play as a video file (MP4 in recent Chrome, otherwise WebM).
+  - URL options: ?t=40 (jump to 40 s, paused)   ?scene=8&u=3 (scene 8, 3 s in, paused)
+-->
+<style>
+  html,body{margin:0;background:#111317;color:#e8e4da;font:14px/1.45 -apple-system,"Helvetica Neue",Arial,sans-serif}
+  #wrap{width:min(1280px,calc(100vw - 32px),calc((100vh - 190px)*16/9));margin:14px auto}
+  canvas{width:100%;display:block;border-radius:8px;background:#000}
+  .bar{display:flex;gap:10px;align-items:center;margin:10px 0;flex-wrap:wrap}
+  button{background:#262a33;color:#e8e4da;border:1px solid #3a3f4b;border-radius:6px;padding:6px 12px;font:inherit;cursor:pointer}
+  button:hover{background:#30353f}
+  #scrub{flex:1;min-width:200px;accent-color:#f2c14e}
+  .mono{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px;color:#9aa0aa}
+  .chapters{display:flex;flex-wrap:wrap;gap:6px}
+  .chapters button{font-size:12px;padding:3px 8px}
+  .chapters button.cur{border-color:#f2c14e;color:#f2c14e}
+  .hint{color:#8b909a;font-size:12.5px;margin:8px 0 0}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+  <div class="bar">
+    <button id="play">Pause</button>
+    <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Timeline">
+    <span id="time" class="mono">0:00</span>
+    <button id="rec">Record video</button>
+  </div>
+  <div class="chapters" id="chap"></div>
+  <p class="hint" id="hint">Illustrative mockup of controller ideas for The Living Ecosystem. Every variation is an idea to test, not a decision.</p>
+</div>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const W = 1280, H = 720, cv = $('c'), g = cv.getContext('2d');
+cv.width = W; cv.height = H;
+const TAU = Math.PI * 2, PI = Math.PI;
+const SERIF = 'Georgia, "Iowan Old Style", "Times New Roman", serif';
+const MONO = '"SF Mono", Menlo, Consolas, monospace';
+const SANS = '-apple-system, "Helvetica Neue", Arial, sans-serif';
+
+/* ---------- helpers ---------- */
+const clamp = (x, a = 0, b = 1) => x < a ? a : x > b ? b : x;
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0)); return t * t * (3 - 2 * t); };
+const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const hex = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const mixC = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+const rgba = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+function rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function rrect(x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
+const gauss = (u, c, w) => Math.exp(-Math.pow((u - c) / w, 2));
+
+const EL = { sun: hex('#f2c14e'), water: hex('#5fb3e8'), seeds: hex('#ec8fbf'), wind: hex('#a8e0cc'), night: hex('#8f7cf0') };
+const ELS = ['sun', 'water', 'seeds'];
+const GREY = [170, 175, 185], RED = hex('#e8785f'), GREEN = hex('#7fd48b');
+const SX = 290, SY = 124, SW = 700, SH = 284, GY = SY + Math.round(SH * 0.64);
+const TH = [SX + SW / 6, SX + SW / 2, SX + SW * 5 / 6];
+const PX = [400, 640, 880];
+const SK = '#0c0d11';
+const FC = ['#f28cb1', '#f6b3c8', '#ffd166', '#f79d65', '#c99be8', '#ffffff', '#ff7aa2', '#9ad0f5'].map(hex);
+
+/* ---------- the little world on the screen ---------- */
+const R = rng(42);
+const GRASS = Array.from({ length: 200 }, () => ({ xr: R(), yr: 0.66 + R() * 0.33, h: 6 + R() * 10, th: R() * 0.85, ph: R() * 6.28 }));
+const FLW = Array.from({ length: 70 }, () => ({ xr: 0.02 + R() * 0.96, yr: 0.7 + R() * 0.27, h: 10 + R() * 16, r: 3 + R() * 3.5, th: 0.1 + R() * 0.85,
+  c: FC[(R() * FC.length) | 0], ph: R() * 6.28, rot: R() * 6.28 })).sort((a, b) => a.yr - b.yr);
+const CRK = Array.from({ length: 22 }, () => {
+  let x = SX + R() * SW, y = GY + 8 + R() * (SY + SH - GY - 14), a = R() * 6.28; const p = [[x, y]];
+  for (let k = 0; k < 4; k++) { a += R() * 1.6 - 0.8; x += Math.cos(a) * 14; y += Math.sin(a) * 5; p.push([x, y]); }
+  return p;
+});
+
+function world(gv, o = {}) {
+  const G = typeof gv === 'function' ? gv : () => gv;
+  const ga = o.avg ?? (typeof gv === 'function' ? 0.15 : gv), dk = o.dark || 0, t = o.t || 0, wind = o.wind || 0, glow = o.glow || 0;
+  let top = mixC(hex('#8c867c'), hex('#5d9fd3'), ga), bot = mixC(hex('#cdbd9f'), hex('#d4ecf2'), ga);
+  top = mixC(top, hex('#0f0d2a'), dk); bot = mixC(bot, hex('#3a2a5c'), dk);
+  let gr = g.createLinearGradient(0, SY, 0, GY);
+  gr.addColorStop(0, rgba(top)); gr.addColorStop(1, rgba(bot));
+  g.fillStyle = gr; g.fillRect(SX, SY, SW, GY - SY + 2);
+  if (dk > 0.3) for (let i = 0; i < 40; i++) {
+    g.fillStyle = `rgba(255,245,230,${(dk - 0.3) * (0.5 + 0.5 * Math.sin(t * 2 + i))})`;
+    g.beginPath(); g.arc(SX + ((i * 137) % SW), SY + ((i * 71) % (GY - SY - 30)), 1.2, 0, TAU); g.fill();
+  }
+  g.fillStyle = rgba(mixC(mixC(hex('#9a8a72'), hex('#7fae8a'), ga), hex('#1c1838'), dk * 0.8));
+  g.beginPath(); g.moveTo(SX, GY + 2);
+  for (let x = 0; x <= SW; x += 14) g.lineTo(SX + x, GY - 20 - 12 * Math.sin(x * 0.011 + 1) - 7 * Math.sin(x * 0.029));
+  g.lineTo(SX + SW, GY + 2); g.closePath(); g.fill();
+  const gc = mixC(mixC(hex('#a88a5e'), hex('#6b9b49'), ga), hex('#1d1a33'), dk * 0.75);
+  gr = g.createLinearGradient(0, GY, 0, SY + SH);
+  gr.addColorStop(0, rgba(gc)); gr.addColorStop(1, rgba(mixC(gc, [0, 0, 0], 0.3)));
+  g.fillStyle = gr; g.fillRect(SX, GY, SW, SY + SH - GY);
+  const ca = (1 - ga) * 0.5;
+  if (ca > 0.02) {
+    g.strokeStyle = `rgba(70,48,28,${ca})`; g.lineWidth = 1; g.beginPath();
+    for (const p of CRK) { g.moveTo(p[0][0], p[0][1]); for (const q of p) g.lineTo(q[0], q[1]); }
+    g.stroke();
+  }
+  g.strokeStyle = rgba(mixC(hex('#5f9e45'), hex('#2a3a30'), dk * 0.6)); g.lineWidth = 1.3; g.beginPath();
+  for (const b of GRASS) {
+    const v = smooth(b.th, b.th + 0.12, G(b.xr, b.yr)); if (v <= 0) continue;
+    const x = SX + b.xr * SW, y = SY + b.yr * SH, h = b.h * v;
+    const sw = Math.sin(t * 2 + b.ph) * 1.5 + wind * 7 * (0.6 + 0.4 * Math.sin(t * 5 + b.ph));
+    g.moveTo(x, y); g.quadraticCurveTo(x, y - h * 0.6, x + sw, y - h);
+  }
+  g.stroke();
+  for (const f of FLW) {
+    const v = smooth(f.th, f.th + 0.12, G(f.xr, f.yr)); if (v <= 0.01) continue;
+    const x = SX + f.xr * SW, y = SY + f.yr * SH, h = f.h * v;
+    const sw = Math.sin(t * 1.6 + f.ph) * 1.5 + wind * 6 * (0.6 + 0.4 * Math.sin(t * 5 + f.ph));
+    const tx = x + sw, ty = y - h;
+    g.strokeStyle = rgba(mixC(hex('#5f9e45'), hex('#2a3a30'), dk * 0.6)); g.lineWidth = 1.2;
+    g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x, y - h * 0.6, tx, ty); g.stroke();
+    const r = f.r * v, col = mixC(f.c, [20, 18, 40], dk * 0.45);
+    if (glow > 0.01) {
+      g.save(); g.globalCompositeOperation = 'lighter';
+      const gg = g.createRadialGradient(tx, ty, 0, tx, ty, r * 4 + 1);
+      gg.addColorStop(0, rgba(f.c, 0.6 * glow)); gg.addColorStop(1, rgba(f.c, 0));
+      g.fillStyle = gg; g.fillRect(tx - r * 4 - 1, ty - r * 4 - 1, r * 8 + 2, r * 8 + 2); g.restore();
+    }
+    g.fillStyle = rgba(col);
+    for (let k = 0; k < 5; k++) { const a = f.rot + k * TAU / 5; g.beginPath(); g.ellipse(tx + Math.cos(a) * r * 0.6, ty + Math.sin(a) * r * 0.6, r * 0.6, r * 0.35, a, 0, TAU); g.fill(); }
+    g.fillStyle = '#ffe08a'; g.beginPath(); g.arc(tx, ty, r * 0.3, 0, TAU); g.fill();
+  }
+}
+function screen(fn) {
+  g.save(); rrect(SX, SY, SW, SH, 10); g.clip(); fn(); g.restore();
+  g.strokeStyle = '#2c3038'; g.lineWidth = 8; rrect(SX - 4, SY - 4, SW + 8, SH + 8, 13); g.stroke();
+}
+
+/* ---------- effects on the screen ---------- */
+function sunGlow(x, y, r, a, t) {
+  if (a <= 0.01) return;
+  g.save(); g.globalCompositeOperation = 'lighter';
+  const gr = g.createRadialGradient(x, y, 2, x, y, r * 2.4);
+  gr.addColorStop(0, `rgba(255,226,140,${0.75 * a})`); gr.addColorStop(1, 'rgba(255,226,140,0)');
+  g.fillStyle = gr; g.fillRect(x - r * 2.4, y - r * 2.4, r * 4.8, r * 4.8); g.restore();
+  g.strokeStyle = `rgba(255,214,110,${0.85 * a})`; g.lineWidth = 2.5;
+  for (let k = 0; k < 10; k++) { const an = k * TAU / 10 + t * 0.4; g.beginPath(); g.moveTo(x + Math.cos(an) * r * 0.72, y + Math.sin(an) * r * 0.72); g.lineTo(x + Math.cos(an) * r * 1.05, y + Math.sin(an) * r * 1.05); g.stroke(); }
+  g.fillStyle = `rgba(255,232,150,${a})`; g.beginPath(); g.arc(x, y, r * 0.48, 0, TAU); g.fill();
+}
+function sunBeam(x, a, t) {
+  if (a <= 0.01) return;
+  g.save(); g.globalCompositeOperation = 'lighter';
+  const gr = g.createLinearGradient(0, SY, 0, GY + 30);
+  gr.addColorStop(0, `rgba(255,226,140,${0.05 * a})`); gr.addColorStop(1, `rgba(255,226,140,${0.42 * a})`);
+  g.fillStyle = gr; g.beginPath(); g.moveTo(x - 18, SY); g.lineTo(x + 18, SY); g.lineTo(x + 58, GY + 30); g.lineTo(x - 58, GY + 30); g.closePath(); g.fill();
+  g.fillStyle = `rgba(255,226,140,${0.35 * a})`; g.beginPath(); g.ellipse(x, GY + 30, 66, 12, 0, 0, TAU); g.fill();
+  g.restore();
+  sunGlow(x, SY + 26, 18, a, t);
+}
+function cloud(x, y, s, a) {
+  g.fillStyle = `rgba(140,160,182,${0.92 * a})`; g.beginPath();
+  g.arc(x, y, 16 * s, 0, TAU); g.arc(x + 18 * s, y + 4 * s, 13 * s, 0, TAU); g.arc(x - 18 * s, y + 5 * s, 12 * s, 0, TAU); g.arc(x + 4 * s, y - 9 * s, 12 * s, 0, TAU);
+  g.fill();
+}
+function rainAt(x, a, t, w = 110) {
+  if (a <= 0.01) return;
+  cloud(x, SY + 38, 1.6, a);
+  g.strokeStyle = `rgba(205,232,255,${0.8 * a})`; g.lineWidth = 1.4; g.beginPath();
+  const top = SY + 56, span = GY + 32 - top;
+  for (let i = 0; i < 30; i++) { const xx = x - w / 2 + ((i * 37.7) % w), yy = top + ((i * 53.3 + t * 360) % span); g.moveTo(xx, yy); g.lineTo(xx - 2, yy + 9); }
+  g.stroke();
+}
+function seedsAt(x, a, t, w = 100) {
+  if (a <= 0.01) return;
+  g.fillStyle = `rgba(255,186,218,${a})`;
+  const top = SY + 14, span = GY + 30 - top;
+  for (let i = 0; i < 22; i++) {
+    const xx = x - w / 2 + ((i * 29.3) % w) + Math.sin(t * 2 + i) * 4, yy = top + ((i * 61.7 + t * 110) % span);
+    g.beginPath(); g.ellipse(xx, yy, 3.2, 2.1, t * 3 + i, 0, TAU); g.fill();
+  }
+}
+function scorchAt(x, a) {
+  if (a <= 0.01) return;
+  g.fillStyle = `rgba(95,58,25,${0.65 * a})`; g.beginPath(); g.ellipse(x, GY + 34, 70, 14, 0, 0, TAU); g.fill();
+  g.strokeStyle = `rgba(45,26,10,${0.75 * a})`; g.lineWidth = 1.3; g.beginPath();
+  for (let k = 0; k < 6; k++) { const xx = x - 50 + k * 20; g.moveTo(xx, GY + 27); g.lineTo(xx + 8, GY + 35); g.lineTo(xx + 3, GY + 42); }
+  g.stroke();
+}
+function windFx(a, t) {
+  if (a <= 0.01) return;
+  g.strokeStyle = `rgba(225,248,240,${0.7 * a})`; g.lineWidth = 2;
+  for (let i = 0; i < 7; i++) {
+    const y = SY + 40 + i * 30, x0 = SX + ((i * 173 + t * 260) % (SW + 200)) - 100;
+    g.beginPath(); g.moveTo(x0, y); g.bezierCurveTo(x0 + 40, y - 10, x0 + 80, y + 10, x0 + 130, y); g.stroke();
+  }
+}
+function effect(el, x, a, t) {
+  if (el === 'sun') sunGlow(x, SY + 70, 34, a, t);
+  else if (el === 'water') rainAt(x, a, t);
+  else if (el === 'seeds') seedsAt(x, a, t);
+}
+function bfly(x, y, s, flap, a) {
+  if (a <= 0.01) return;
+  g.save(); g.globalCompositeOperation = 'lighter';
+  let gr = g.createRadialGradient(x, y, 4, x, y, 130 * s);
+  gr.addColorStop(0, `rgba(255,160,220,${0.45 * a})`); gr.addColorStop(1, 'rgba(255,160,220,0)');
+  g.fillStyle = gr; g.fillRect(x - 130 * s, y - 130 * s, 260 * s, 260 * s); g.restore();
+  for (const sd of [-1, 1]) {
+    g.save(); g.translate(x, y); g.scale(sd * s * Math.cos(flap), s); g.globalAlpha = a;
+    gr = g.createRadialGradient(0, 0, 4, 0, 0, 82);
+    gr.addColorStop(0, '#fff0b0'); gr.addColorStop(0.45, '#ffb36b'); gr.addColorStop(0.8, '#ff6fa8'); gr.addColorStop(1, '#8a6cff');
+    g.fillStyle = gr; g.beginPath(); g.ellipse(38, -26, 40, 28, -0.55, 0, TAU); g.fill();
+    gr = g.createRadialGradient(0, 0, 4, 0, 0, 60);
+    gr.addColorStop(0, '#ffe4a0'); gr.addColorStop(0.5, '#ff8f7a'); gr.addColorStop(1, '#5fd4ff');
+    g.fillStyle = gr; g.beginPath(); g.ellipse(26, 22, 25, 20, 0.5, 0, TAU); g.fill();
+    g.restore();
+  }
+  g.save(); g.globalAlpha = a; g.fillStyle = '#4a2a7a'; g.beginPath(); g.ellipse(x, y, 4 * s, 28 * s, 0, 0, TAU); g.fill(); g.restore();
+}
+
+/* ---------- people and controllers (in the room, seen from behind) ---------- */
+function body(px, rim, sc = 1, alpha = 1) {
+  g.save(); g.globalAlpha = alpha; g.translate(px, H); g.scale(sc, sc);
+  g.fillStyle = SK;
+  g.beginPath(); g.moveTo(-82, 2); g.bezierCurveTo(-80, -60, -50, -72, 0, -74); g.bezierCurveTo(50, -72, 80, -60, 82, 2); g.fill();
+  g.beginPath(); g.ellipse(0, -108, 27, 32, 0, 0, TAU); g.fill();
+  {
+    g.strokeStyle = rim ? rgba(rim, 0.8) : 'rgba(150,160,182,0.35)'; g.lineWidth = rim ? 2.5 : 1.5;
+    g.beginPath(); g.ellipse(0, -108, 27, 32, 0, PI * 1.1, PI * 1.9); g.stroke();
+    g.beginPath(); g.moveTo(-70, -46); g.bezierCurveTo(-60, -64, -40, -71, -12, -73); g.stroke();
+    g.beginPath(); g.moveTo(70, -46); g.bezierCurveTo(60, -64, 40, -71, 12, -73); g.stroke();
+  }
+  g.restore();
+}
+function arm(px, hx, hy, sc = 1, alpha = 1) {
+  g.save(); g.globalAlpha = alpha; g.strokeStyle = SK; g.lineCap = 'round'; g.lineWidth = 16 * sc;
+  const sx = px + 44 * sc, sy = H - 58 * sc;
+  g.beginPath(); g.moveTo(sx, sy); g.quadraticCurveTo(sx + (hx - sx) * 0.2 + 10 * sc, sy - (sy - hy) * 0.6, hx, hy + 24); g.stroke();
+  g.restore();
+}
+function hand(hx, hy, sc = 1) { g.fillStyle = SK; g.beginPath(); g.ellipse(hx, hy + 24, 11 * sc, 9 * sc, 0, 0, TAU); g.fill(); }
+
+function ctrl(type, x, y, o = {}) {
+  const rot = o.rot || 0, s = o.s || 1, core = o.core || null, glow = o.glow || 0, open = o.open || 0;
+  g.save(); g.translate(x, y); g.rotate(rot); g.scale(s, s);
+  if (core && glow > 0.01) {
+    const gr = g.createRadialGradient(0, 0, 4, 0, 0, 72);
+    gr.addColorStop(0, rgba(core, 0.55 * glow)); gr.addColorStop(1, rgba(core, 0));
+    g.fillStyle = gr; g.fillRect(-72, -72, 144, 144);
+  }
+  const coreFill = core ? rgba(mixC(hex('#3a2a1c'), core, 0.2 + 0.8 * glow)) : '#3a2a1c';
+  const wood = (x0, y0, x1, y1) => { const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, '#d6a86c'); gr.addColorStop(1, '#7c5631'); return gr; };
+  if (type === 'pod' || type === 'empty') {
+    g.fillStyle = wood(-22, -30, 22, 30); g.beginPath(); g.ellipse(0, 0, 22, 30, 0, 0, TAU); g.fill();
+    g.strokeStyle = '#4f3620'; g.lineWidth = 1.5; g.stroke();
+    g.strokeStyle = 'rgba(70,45,25,0.55)'; g.lineWidth = 1.2;
+    for (const d of [-1, 1]) { g.beginPath(); g.moveTo(d * 7, -28); g.quadraticCurveTo(d * 16, 0, d * 7, 28); g.stroke(); }
+    if (type === 'empty') {
+      g.fillStyle = '#22170e'; g.beginPath(); g.arc(0, -2, 9, 0, TAU); g.fill();
+      g.setLineDash([3, 2]); g.strokeStyle = '#d9c2a0'; g.lineWidth = 1.2; g.stroke(); g.setLineDash([]);
+    } else {
+      g.fillStyle = coreFill; g.beginPath(); g.arc(0, -2, 8, 0, TAU); g.fill();
+      if (core && glow > 0.3) { g.fillStyle = `rgba(255,255,255,${0.6 * glow})`; g.beginPath(); g.arc(-2, -4, 3, 0, TAU); g.fill(); }
+    }
+  } else if (type === 'stone') {
+    const gr = g.createLinearGradient(-26, -20, 26, 20); gr.addColorStop(0, '#aab3bc'); gr.addColorStop(1, '#5b636d');
+    g.fillStyle = gr; g.beginPath(); g.ellipse(0, 0, 27, 20, 0.15, 0, TAU); g.fill();
+    g.strokeStyle = '#40464e'; g.lineWidth = 1.5; g.stroke();
+    g.fillStyle = core ? rgba(mixC(hex('#3c434b'), core, 0.2 + 0.8 * glow)) : '#3c434b'; g.beginPath(); g.arc(0, 0, 7, 0, TAU); g.fill();
+  } else if (type === 'lantern') {
+    g.strokeStyle = '#cbb48a'; g.lineWidth = 2; g.beginPath(); g.arc(0, -34, 8, PI, 0); g.stroke();
+    g.fillStyle = '#6b5233'; rrect(-15, -34, 30, 7, 2); g.fill();
+    g.fillStyle = core ? rgba(mixC([200, 215, 230], core, glow), 0.3 + 0.6 * glow) : 'rgba(200,215,230,0.3)';
+    rrect(-16, -27, 32, 38, 5); g.fill(); g.strokeStyle = '#cbb48a'; g.lineWidth = 1.5; g.stroke();
+    g.beginPath(); for (const bx of [-8, 0, 8]) { g.moveTo(bx, -27); g.lineTo(bx, 11); } g.stroke();
+    if (glow > 0.01) { g.fillStyle = `rgba(255,250,230,${0.85 * glow})`; g.beginPath(); g.ellipse(0, -8, 5, 8, 0, 0, TAU); g.fill(); }
+    g.fillStyle = '#6b5233'; rrect(-17, 11, 34, 8, 2); g.fill();
+  } else if (type === 'bud') {
+    g.strokeStyle = '#4f8a3c'; g.lineWidth = 4; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(0, 10); g.quadraticCurveTo(4, 30, 0, 48); g.stroke();
+    g.fillStyle = '#5f9e45'; g.beginPath(); g.ellipse(10, 32, 10, 4, -0.5, 0, TAU); g.fill();
+    for (let k = 0; k < 5; k++) {
+      const ang = (k - 2) * 0.28 * (1 + open * 2.6);
+      g.save(); g.translate(0, 6); g.rotate(ang);
+      const gr = g.createLinearGradient(0, -40, 0, 0); gr.addColorStop(0, '#ffb3d1'); gr.addColorStop(1, '#d65d92');
+      g.fillStyle = gr; g.beginPath(); g.ellipse(0, -20, 8, 21, 0, 0, TAU); g.fill();
+      g.strokeStyle = 'rgba(120,30,70,0.4)'; g.lineWidth = 1; g.stroke(); g.restore();
+    }
+    if (open > 0.05) {
+      g.fillStyle = rgba(core || hex('#ffe08a'), open); g.beginPath(); g.arc(0, 0, 7, 0, TAU); g.fill();
+      g.fillStyle = `rgba(255,255,240,${open})`; g.beginPath(); g.arc(-1, -1, 3, 0, TAU); g.fill();
+    }
+  } else if (type === 'wand') {
+    g.strokeStyle = '#7a5434'; g.lineCap = 'round'; g.lineWidth = 6;
+    g.beginPath(); g.moveTo(5, 46); g.quadraticCurveTo(-2, 0, -4, -42); g.stroke();
+    g.lineWidth = 3; g.beginPath(); g.moveTo(1, 12); g.lineTo(14, 2); g.moveTo(-2, -16); g.lineTo(-14, -26); g.stroke();
+    g.fillStyle = '#6fb24f'; g.beginPath(); g.ellipse(18, 0, 6, 3, -0.6, 0, TAU); g.fill(); g.beginPath(); g.ellipse(-18, -28, 6, 3, 0.6, 0, TAU); g.fill();
+    g.fillStyle = core ? rgba(mixC([255, 245, 210], core, glow)) : '#efe2c0'; g.beginPath(); g.arc(-4, -46, 5, 0, TAU); g.fill();
+  } else if (type === 'jar') {
+    g.fillStyle = '#8a6a45'; rrect(-15, -30, 30, 9, 3); g.fill();
+    g.fillStyle = 'rgba(200,230,255,0.12)'; rrect(-19, -21, 38, 47, 9); g.fill();
+    if (core && glow > 0.01) { const gr = g.createRadialGradient(0, 6, 1, 0, 6, 22); gr.addColorStop(0, rgba(core, 0.7 * glow)); gr.addColorStop(1, rgba(core, 0)); g.fillStyle = gr; g.fillRect(-19, -21, 38, 47); }
+    g.fillStyle = '#4f8a3c'; g.beginPath(); g.ellipse(0, 21, 16, 6, 0, 0, TAU); g.fill();
+    const ph = 8 + 14 * open;
+    g.strokeStyle = '#6fb24f'; g.lineWidth = 2; g.beginPath(); g.moveTo(0, 18); g.lineTo(0, 18 - ph); g.stroke();
+    g.fillStyle = '#6fb24f'; g.beginPath(); g.ellipse(4, 14 - ph * 0.4, 4, 2, -0.5, 0, TAU); g.fill(); g.beginPath(); g.ellipse(-4, 16 - ph * 0.7, 4, 2, 0.5, 0, TAU); g.fill();
+    if (open > 0.4) { g.fillStyle = rgba(core || FC[0], open); g.beginPath(); g.arc(0, 18 - ph, 3.5, 0, TAU); g.fill(); }
+    g.strokeStyle = 'rgba(225,240,250,0.75)'; g.lineWidth = 2; rrect(-19, -21, 38, 47, 9); g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,0.5)'; g.lineWidth = 2; g.beginPath(); g.moveTo(-12, -12); g.lineTo(-12, 8); g.stroke();
+  } else if (type === 'wedge') {
+    const a0 = -PI / 2 - PI / 3 + (o.k || 0) * TAU / 3;
+    g.fillStyle = wood(-30, -30, 30, 30); g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 32, a0, a0 + TAU / 3); g.closePath(); g.fill();
+    g.strokeStyle = '#4f3620'; g.lineWidth = 1.5; g.stroke();
+    const am = a0 + TAU / 6; g.fillStyle = coreFill; g.beginPath(); g.arc(Math.cos(am) * 17, Math.sin(am) * 17, 5, 0, TAU); g.fill();
+  }
+  g.restore();
+}
+function player(px, o = {}) {
+  const sc = o.sc || 1, hx = o.hx ?? px + 34 * sc, hy = o.hy ?? 492, al = o.alpha ?? 1;
+  if (!o.noArm) arm(px, hx, hy, sc, al);
+  body(px, o.rim, sc, al);
+  if (o.type !== 'none') { g.save(); g.globalAlpha = al; ctrl(o.type || 'pod', hx, hy, o); if (!o.noArm) hand(hx, hy, sc); g.restore(); }
+}
+
+/* ---------- annotations ---------- */
+function tag(x, y, text, col, a = 1) {
+  if (a <= 0.01) return;
+  g.save(); g.globalAlpha = a; g.font = `700 12px ${MONO}`;
+  const w = g.measureText(text).width + 20;
+  g.fillStyle = rgba(mixC(col, [20, 20, 28], 0.62), 0.94); g.strokeStyle = rgba(col, 0.95); g.lineWidth = 1.5;
+  rrect(x - w / 2, y - 13, w, 26, 13); g.fill(); g.stroke();
+  g.fillStyle = '#f6f2ea'; g.textAlign = 'center'; g.fillText(text, x, y + 4); g.restore();
+}
+function ray(x1, y1, x2, y2, col, a) {
+  if (a <= 0.01) return;
+  g.save(); g.setLineDash([7, 6]); g.strokeStyle = rgba(col, 0.85 * a); g.lineWidth = 2.2;
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.restore();
+}
+function shakeLines(x, y, a) {
+  if (a <= 0.01) return;
+  g.strokeStyle = `rgba(232,232,240,${0.75 * a})`; g.lineWidth = 2;
+  for (const r of [38, 47]) {
+    g.beginPath(); g.arc(x, y, r, -0.5, 0.5); g.stroke();
+    g.beginPath(); g.arc(x, y, r, PI - 0.5, PI + 0.5); g.stroke();
+  }
+}
+function arcArrow(x1, x2, y, col, a) {
+  if (a <= 0.01) return;
+  const mx = (x1 + x2) / 2;
+  g.save(); g.strokeStyle = rgba(col, a); g.fillStyle = rgba(col, a); g.lineWidth = 2.5;
+  g.beginPath(); g.moveTo(x1, y); g.quadraticCurveTo(mx, y - 50, x2, y); g.stroke();
+  g.translate(x2, y); g.rotate(Math.atan2(50, x2 - mx));
+  g.beginPath(); g.moveTo(2, 0); g.lineTo(-11, -6); g.lineTo(-11, 6); g.closePath(); g.fill(); g.restore();
+}
+function token(x, y, el, s = 1, a = 1) {
+  if (a <= 0.01) return;
+  const c = EL[el];
+  g.save(); g.globalAlpha = a; g.translate(x, y); g.scale(s, s);
+  g.fillStyle = rgba(mixC(c, [30, 30, 40], 0.5)); g.strokeStyle = rgba(c); g.lineWidth = 2;
+  g.beginPath(); g.arc(0, 0, 12, 0, TAU); g.fill(); g.stroke();
+  g.fillStyle = rgba(c); g.strokeStyle = rgba(c); g.lineWidth = 1.6;
+  if (el === 'sun') {
+    g.beginPath(); g.arc(0, 0, 4, 0, TAU); g.fill();
+    for (let k = 0; k < 8; k++) { const an = k * TAU / 8; g.beginPath(); g.moveTo(Math.cos(an) * 6, Math.sin(an) * 6); g.lineTo(Math.cos(an) * 9, Math.sin(an) * 9); g.stroke(); }
+  } else if (el === 'water') {
+    g.beginPath(); g.moveTo(0, -7); g.quadraticCurveTo(7, 2, 0, 7); g.quadraticCurveTo(-7, 2, 0, -7); g.fill();
+  } else {
+    g.beginPath(); g.ellipse(0, 2, 3.5, 5, 0, 0, TAU); g.fill();
+    g.beginPath(); g.moveTo(0, -3); g.quadraticCurveTo(3, -8, 7, -7); g.stroke();
+  }
+  g.restore();
+}
+function bubble(x, y, text, tx, ty, a) {
+  if (a <= 0.01) return;
+  g.save(); g.globalAlpha = a; g.font = `600 15px ${SANS}`;
+  const w = g.measureText(text).width + 28, h = 34;
+  g.fillStyle = '#f3efe6'; rrect(x - w / 2, y - h / 2, w, h, 12); g.fill();
+  g.beginPath(); g.moveTo(x - w / 2 + 18, y + h / 2 - 2); g.lineTo(tx, ty); g.lineTo(x - w / 2 + 42, y + h / 2 - 2); g.closePath(); g.fill();
+  g.fillStyle = '#1a1c22'; g.textAlign = 'center'; g.fillText(text, x, y + 5); g.restore();
+}
+function timerRing(x, y, frac) {
+  g.fillStyle = 'rgba(10,12,18,0.55)'; g.beginPath(); g.arc(x, y, 24, 0, TAU); g.fill();
+  g.lineWidth = 4; g.strokeStyle = 'rgba(255,255,255,0.25)'; g.beginPath(); g.arc(x, y, 17, 0, TAU); g.stroke();
+  g.strokeStyle = '#f3efe6'; g.beginPath(); g.arc(x, y, 17, -PI / 2, -PI / 2 + TAU * frac); g.stroke();
+  g.fillStyle = '#f3efe6'; g.font = `700 10px ${MONO}`; g.textAlign = 'center'; g.fillText('30s', x, y + 4); g.textAlign = 'left';
+}
+const PATHS = {
+  sun: p => [Math.cos(TAU * p - PI / 2) * 32, Math.sin(TAU * p - PI / 2) * 32],
+  water: p => [-44 + 88 * p, -16 * Math.sin(TAU * 1.5 * p)],
+  seeds: p => { const r = 4 + 30 * p, a = 3.2 * PI * p; return [Math.cos(a) * r, Math.sin(a) * r]; },
+};
+function trail(el, cx, cy, sc, p, a) {
+  if (p <= 0 || a <= 0.01) return;
+  g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = rgba(EL[el], 0.95 * a); g.lineWidth = 4; g.lineCap = 'round'; g.lineJoin = 'round';
+  g.beginPath(); const N = Math.max(2, Math.floor(70 * p));
+  for (let k = 0; k <= N; k++) { const [x, y] = PATHS[el](p * k / N); if (k) g.lineTo(cx + x * sc, cy + y * sc); else g.moveTo(cx + x * sc, cy + y * sc); }
+  g.stroke(); g.restore();
+}
+
+/* ---------- scenes ---------- */
+const SECS = [
+  { label: 'THE LIVING ECOSYSTEM · CONTROLLER IDEAS', col: '#e8a66a' },
+  { label: 'WHAT MAKES EACH CONTROLLER DIFFERENT', col: '#f2c14e' },
+  { label: 'WHAT YOU DO ON SCREEN', col: '#5fb3e8' },
+  { label: 'TWISTS THAT DEEPEN THE TEAMWORK', col: '#ec8fbf' },
+  { label: 'WHAT THE CONTROLLER COULD BE', col: '#9be07a' },
+];
+const SCENES = [
+  { sec: 0, title: 'Matching controllers, one element each', cap: 'Everyone holds a controller that looks the same, but each one unlocks only one element.', dur: 5.5,
+    draw(u) {
+      screen(() => world(0.05, { t: u }));
+      for (let i = 0; i < 3; i++) {
+        const a = smooth(0.3 + i * 0.35, 0.9 + i * 0.35, u);
+        player(PX[i], { alpha: a, hy: 492 + (1 - a) * 40 });
+        tag(PX[i] + 34, 432, '?', GREY, smooth(2 + i * 0.3, 2.5 + i * 0.3, u));
+      }
+    } },
+
+  { sec: 1, title: 'Identical shell, hidden element', cap: 'All three look like the same carved pod. You only learn which element yours holds by trying it and watching the screen.', dur: 7.5,
+    draw(u) {
+      const st = [0.8, 2.6, 4.4], a = st.map(s => smooth(s + 0.3, s + 0.9, u)), lift = st.map(s => smooth(s, s + 0.4, u) * (1 - smooth(s + 1.4, s + 1.9, u)));
+      screen(() => { world(0.05 + 0.45 * smooth(5.6, 7.2, u), { t: u }); ELS.forEach((e, i) => effect(e, TH[i], a[i], u)); });
+      for (let i = 0; i < 3; i++) player(PX[i], { hy: 492 - 26 * lift[i], rot: Math.sin(u * 16) * 0.12 * lift[i] });
+      ['YOU HOLD: SUN', 'YOU HOLD: WATER', 'YOU HOLD: SEEDS'].forEach((s, i) => {
+        tag(PX[i] + 34, 432, '?', GREY, 1 - smooth(st[i] + 0.4, st[i] + 0.8, u));
+        tag(PX[i] + 34, 432, s, EL[ELS[i]], smooth(st[i] + 0.8, st[i] + 1.1, u));
+      });
+    } },
+
+  { sec: 1, title: 'Glowing core', cap: 'Same shell, but once you use it, a light inside turns the color of your element. The secret becomes visible to everyone around you.', dur: 6.5,
+    draw(u) {
+      const st = [0.7, 1.9, 3.1], gl = st.map(s => smooth(s, s + 0.6, u));
+      screen(() => { world(0.1 + 0.35 * smooth(3.6, 5.6, u), { t: u }); ELS.forEach((e, i) => effect(e, TH[i], gl[i], u)); });
+      for (let i = 0; i < 3; i++) player(PX[i], { core: EL[ELS[i]], glow: gl[i], rim: gl[i] > 0.4 ? EL[ELS[i]] : null });
+      ['GOLD = SUN', 'BLUE = WATER', 'PINK = SEEDS'].forEach((s, i) => tag(PX[i] + 34, 432, s, EL[ELS[i]], smooth(st[i] + 0.4, st[i] + 0.8, u)));
+    } },
+
+  { sec: 1, title: 'Swappable element stones', cap: 'Controllers stay empty until you slot in a sun, water or seed stone. With more controllers than stones, people share or trade.', dur: 8,
+    draw(u) {
+      const P4 = [330, 530, 730, 930], hx = i => P4[i] + 31;
+      const fly = ELS.map((_, i) => ease(smooth(0.8 + i * 0.7, 1.7 + i * 0.7, u)));
+      const trade = ease(smooth(4.4, 5.6, u));
+      const has = [fly[0] >= 1, fly[1] >= 1 && trade <= 0, fly[2] >= 1, trade >= 1];
+      const elAt = ['sun', 'water', 'seeds', 'water'];
+      screen(() => {
+        world(0.06 + 0.4 * smooth(3, 7.5, u), { t: u });
+        for (let i = 0; i < 4; i++) if (has[i]) effect(elAt[i], clamp(hx(i), SX + 50, SX + SW - 50), 1, u);
+      });
+      g.fillStyle = '#2a2d35'; rrect(90, 540, 120, 40, 8); g.fill();
+      g.fillStyle = '#7d828c'; g.font = `11px ${MONO}`; g.textAlign = 'center'; g.fillText('ELEMENT STONES', 150, 600); g.textAlign = 'left';
+      for (let i = 0; i < 4; i++) player(P4[i], { sc: 0.9, hx: hx(i), type: has[i] ? 'pod' : 'empty', core: has[i] ? EL[elAt[i]] : null, glow: has[i] ? 1 : 0 });
+      ELS.forEach((e, i) => {
+        const sx = 118 + i * 32, sy = 560, f = fly[i];
+        if (f <= 0) token(sx, sy, e);
+        else if (f < 1) token(lerp(sx, hx(i), f), lerp(sy, 490, f) - Math.sin(f * PI) * 120, e, 1.1);
+      });
+      if (trade > 0 && trade < 1) {
+        token(lerp(hx(1), hx(3), trade), 490 - Math.sin(trade * PI) * 110, 'water', 1.1);
+        arcArrow(hx(1), hx(3), 440, EL.water, 0.6);
+      }
+      tag(hx(3), 432, 'NO STONE', GREY, smooth(2.8, 3.2, u) * (1 - smooth(4.6, 5, u)));
+      tag(hx(3), 432, 'TRADED IN', EL.water, smooth(5.6, 6, u));
+      tag(hx(1), 432, 'GAVE IT AWAY', GREY, smooth(5.6, 6, u));
+    } },
+
+  { sec: 1, title: 'Same gesture, different result', cap: 'Everyone does the same motion (shake, tilt or squeeze), but each controller turns it into a different element.', dur: 6.5,
+    draw(u) {
+      const sh = smooth(0.8, 1.1, u) * (1 - smooth(5.2, 5.6, u)), a = smooth(1.3, 1.9, u);
+      screen(() => { world(0.08 + 0.4 * smooth(2.5, 5.5, u), { t: u }); ELS.forEach((e, i) => effect(e, TH[i], a, u)); });
+      for (let i = 0; i < 3; i++) {
+        const dx = Math.sin(u * 30) * 7 * sh;
+        ray(PX[i] + 34, 460, TH[i], SY + SH - 4, EL[ELS[i]], a * 0.8);
+        player(PX[i], { hx: PX[i] + 34 + dx, core: EL[ELS[i]], glow: a });
+        shakeLines(PX[i] + 34 + dx, 492, sh);
+      }
+      tag(520, 560, 'SAME SHAKE', GREY, smooth(0.9, 1.3, u));
+      tag(760, 560, '3 DIFFERENT RESULTS', GREY, smooth(1.8, 2.2, u));
+    } },
+
+  { sec: 1, title: 'Different gesture per element', cap: 'The controllers look alike, but each wants its own motion: hold it up high, tip it like pouring, or flick it to scatter.', dur: 7.5,
+    draw(u) {
+      const up = smooth(0.7, 1.3, u), tip = smooth(2.5, 3.1, u), fl = smooth(4.3, 4.5, u) * (1 - smooth(5.6, 5.8, u));
+      const a = [smooth(1.2, 1.8, u), smooth(3, 3.6, u), smooth(4.6, 5.2, u)];
+      screen(() => { world(0.06 + 0.5 * smooth(5.2, 7, u), { t: u }); ELS.forEach((e, i) => effect(e, TH[i], a[i], u)); });
+      player(PX[0], { hy: 492 - 56 * up, core: EL.sun, glow: a[0] });
+      const rot2 = 1.15 * tip;
+      player(PX[1], { rot: rot2, core: EL.water, glow: a[1] });
+      if (tip > 0.6) {
+        const tx = PX[1] + 34 + Math.sin(rot2) * 30, ty = 492 - Math.cos(rot2) * 30;
+        g.fillStyle = rgba(EL.water, 0.9);
+        for (let k = 0; k < 5; k++) { const p = (u * 1.6 + k * 0.2) % 1; g.beginPath(); g.ellipse(tx + 4, ty + p * 46, 2.2, 3.2, 0, 0, TAU); g.fill(); }
+      }
+      player(PX[2], { rot: Math.sin(u * 22) * 0.55 * fl, core: EL.seeds, glow: a[2] });
+      if (fl > 0.05) {
+        g.fillStyle = rgba(EL.seeds, fl);
+        for (let k = 0; k < 14; k++) { const p = (u * 1.8 + k * 0.071) % 1; g.beginPath(); g.ellipse(PX[2] + 40 + p * 90 + k * 2, 470 - p * 80 + p * p * 70, 2.6, 1.8, k, 0, TAU); g.fill(); }
+      }
+      tag(PX[0] - 70, 470, 'HOLD UP HIGH', EL.sun, smooth(1.3, 1.6, u));
+      tag(PX[1] + 34, 410 + 22, 'TIP TO POUR', EL.water, smooth(3.1, 3.4, u));
+      tag(PX[2] + 34, 432, 'FLICK TO SCATTER', EL.seeds, smooth(4.6, 4.9, u));
+    } },
+
+  { sec: 1, title: 'Element set by where you stand', cap: 'Any controller becomes Sunlight on the sun pad and Water on the water pad. Swap spots and you swap roles.', dur: 7.5,
+    draw(u) {
+      const e = ease(smooth(3, 4.6, u));
+      const pos = [lerp(PX[0], PX[1], e), lerp(PX[1], PX[0], e), PX[2]];
+      const padEl = x => x < 520 ? 'sun' : x < 760 ? 'water' : 'seeds';
+      const dip = 1 - 0.75 * gauss(e, 0.5, 0.12);
+      screen(() => { world(0.1 + 0.4 * smooth(1, 7, u), { t: u }); ELS.forEach((el, i) => effect(el, TH[i], dip, u)); });
+      PX.forEach((x, i) => { g.fillStyle = rgba(EL[ELS[i]], 0.3); g.strokeStyle = rgba(EL[ELS[i]], 0.9); g.lineWidth = 2; g.beginPath(); g.ellipse(x, 706, 104, 18, 0, 0, TAU); g.fill(); g.stroke(); });
+      [0, 2, 1].forEach(i => player(pos[i], { hx: pos[i] + 34, core: EL[padEl(pos[i])], glow: dip }));
+      g.font = `700 11px ${MONO}`; g.textAlign = 'center';
+      ['SUN PAD', 'WATER PAD', 'SEED PAD'].forEach((s, i) => { g.fillStyle = rgba(EL[ELS[i]]); g.fillText(s, PX[i], 712); });
+      g.textAlign = 'left';
+      for (let i = 0; i < 3; i++) tag(PX[i] + 34, 432, ['SUN', 'WATER', 'SEEDS'][i], EL[ELS[i]], (1 - smooth(2.6, 3, u)) + smooth(5, 5.4, u));
+      tag(520, 560, 'SWAPPING SPOTS', GREY, smooth(3, 3.3, u) * (1 - smooth(4.6, 5, u)));
+    } },
+
+  { sec: 1, title: 'Elements rotate', cap: 'Every 30 seconds or so, the elements shift to the next controller, so the group has to keep checking who holds what.', dur: 7.5,
+    draw(u) {
+      const steps = [2.4, 4.8], k = u >= steps[1] ? 2 : u >= steps[0] ? 1 : 0;
+      const elOf = i => ELS[((i - k) % 3 + 3) % 3];
+      const dip = Math.max(gauss(u, steps[0], 0.22), gauss(u, steps[1], 0.22)), a = 1 - dip;
+      const arr = Math.max(gauss(u, steps[0], 0.45), gauss(u, steps[1], 0.45));
+      screen(() => {
+        world(0.1 + 0.35 * smooth(0.5, 7, u), { t: u });
+        for (let i = 0; i < 3; i++) effect(elOf(i), TH[i], a, u);
+        timerRing(SX + SW - 40, SY + 40, (u % 2.4) / 2.4);
+        tag(640, SY + 30, 'ELEMENTS SHIFT', GREY, arr);
+      });
+      for (let i = 0; i < 3; i++) player(PX[i], { core: EL[elOf(i)], glow: a, rim: EL[elOf(i)] });
+      arcArrow(PX[0] + 50, PX[1] + 18, 448, [240, 240, 245], arr);
+      arcArrow(PX[1] + 50, PX[2] + 18, 448, [240, 240, 245], arr);
+      for (let i = 0; i < 3; i++) tag(PX[i] + 34, 432, elOf(i).toUpperCase(), EL[elOf(i)], (1 - arr) * smooth(0.3, 0.6, u));
+    } },
+
+  { sec: 2, title: 'Aim and pour', cap: 'Each controller is a pointer. Plants only grow where the sun beam, rain and seeds overlap, and too much sun on one spot scorches it.', dur: 9.5,
+    draw(u) {
+      const T = SX + 400;
+      const sx = lerp(SX + 120, T, ease(smooth(4.4, 5.8, u))), rx = lerp(SX + 620, T, ease(smooth(1.2, 3.4, u))), dx = lerp(SX + 520, T, ease(smooth(2.4, 4.2, u)));
+      const ov = smooth(5.8, 6.4, u), grownow = smooth(6, 8.6, u);
+      const grow = (xr) => 0.04 + ov * grownow * Math.exp(-Math.pow((SX + xr * SW - T) / 95, 2));
+      screen(() => {
+        world(grow, { t: u, avg: 0.1 });
+        scorchAt(SX + 120, smooth(1, 3.6, u));
+        sunBeam(sx, 1, u); rainAt(rx, 1, u, 100); seedsAt(dx, 1, u, 90);
+        tag(SX + 120, GY + 66, 'SCORCHED', RED, smooth(2.6, 3, u));
+        tag(T, GY - 60, 'GROWS ONLY HERE', GREEN, smooth(6.4, 6.8, u));
+      });
+      const tg = [[sx, GY + 30], [rx, SY + 60], [dx, SY + 40]];
+      for (let i = 0; i < 3; i++) {
+        const hx = PX[i] + 34, hy = 492;
+        ray(hx, hy - 30, tg[i][0], tg[i][1], EL[ELS[i]], 0.9);
+        player(PX[i], { core: EL[ELS[i]], glow: 1, rot: clamp(Math.atan2(tg[i][1] - hy, tg[i][0] - hx) + PI / 2, -0.8, 0.8) });
+      }
+    } },
+
+  { sec: 2, title: 'Hold to charge', cap: 'Point at a glowing orb on screen and hold steady until it fills. Then your element pours out.', dur: 7.5,
+    draw(u) {
+      const O = { x: 640, y: SY + 96 }, p = clamp((u - 1.2) / 3.4), burst = smooth(4.6, 5.4, u);
+      screen(() => {
+        world(0.05 + 0.55 * smooth(4.8, 6.8, u), { t: u });
+        if (burst > 0) sunGlow(O.x, O.y, 40 + 70 * burst, burst, u);
+        const oa = 1 - burst;
+        if (oa > 0.01) {
+          g.save(); g.globalCompositeOperation = 'lighter';
+          const gr = g.createRadialGradient(O.x, O.y, 2, O.x, O.y, 44);
+          gr.addColorStop(0, `rgba(255,226,140,${(0.5 + 0.3 * Math.sin(u * 5)) * oa})`); gr.addColorStop(1, 'rgba(255,226,140,0)');
+          g.fillStyle = gr; g.fillRect(O.x - 44, O.y - 44, 88, 88); g.restore();
+          g.lineWidth = 6; g.strokeStyle = `rgba(255,255,255,${0.3 * oa})`; g.beginPath(); g.arc(O.x, O.y, 32, 0, TAU); g.stroke();
+          g.strokeStyle = rgba(EL.sun, oa); g.beginPath(); g.arc(O.x, O.y, 32, -PI / 2, -PI / 2 + TAU * p); g.stroke();
+          g.fillStyle = `rgba(255,255,255,${oa})`; g.font = `700 13px ${MONO}`; g.textAlign = 'center'; g.fillText(`${Math.round(p * 100)}%`, O.x, O.y + 5); g.textAlign = 'left';
+        }
+      });
+      ray(PX[1] + 34, 462, O.x, O.y + 36, EL.sun, smooth(0.8, 1.2, u) * (1 - burst * 0.8));
+      player(PX[0], { alpha: 0.6 }); player(PX[2], { alpha: 0.6 });
+      player(PX[1], { core: EL.sun, glow: 0.3 + 0.7 * Math.max(p, burst), rot: clamp(Math.atan2(O.y - 492, O.x - PX[1] - 34) + PI / 2, -0.8, 0.8) });
+      tag(PX[1] - 100, 470, 'HOLD STEADY', EL.sun, smooth(1.2, 1.5, u) * (1 - smooth(4.5, 4.8, u)));
+      tag(PX[1] - 100, 470, 'RELEASED', EL.sun, smooth(4.8, 5.1, u));
+    } },
+
+  { sec: 2, title: 'Trace the symbol', cap: "Draw your element's shape in the air (a circle for sun, a wave for water, a spiral for seeds) to release it.", dur: 8.5,
+    draw(u) {
+      const st = [0.6, 2.7, 4.8], D = 1.6;
+      const pr = st.map(s => clamp((u - s) / D)), rel = st.map(s => smooth(s + D, s + D + 0.5, u));
+      screen(() => {
+        world(0.06 + 0.45 * smooth(6.6, 8.2, u), { t: u });
+        ELS.forEach((e, i) => { trail(e, TH[i], SY + 104, 1.7, pr[i], 1 - rel[i] * 0.7); effect(e, TH[i], rel[i], u); });
+      });
+      ELS.forEach((e, i) => {
+        const [ox, oy] = PATHS[e](pr[i]), k = pr[i] > 0 ? 1 - rel[i] : 0;
+        trail(e, PX[i] + 34, 492, 1, pr[i], 1 - rel[i]);
+        player(PX[i], { hx: PX[i] + 34 + ox * k, hy: 492 + oy * k, core: EL[e], glow: pr[i] > 0 ? 0.4 + 0.6 * rel[i] : 0 });
+      });
+      ['CIRCLE = SUN', 'WAVE = WATER', 'SPIRAL = SEEDS'].forEach((s, i) => tag(PX[i] + 34, 432, s, EL[ELS[i]], smooth(st[i] - 0.3, st[i], u)));
+    } },
+
+  { sec: 2, title: 'Keep the rhythm', cap: 'Perform your gesture in time with a slow pulse on screen. It only blooms when all three keep the same beat.', dur: 8.5,
+    draw(u) {
+      const ph = [0, 0, lerp(0.42, 0, smooth(3.4, 4.6, u))];
+      const beat = t => Math.pow(Math.max(0, Math.cos(TAU * t)), 8);
+      const inSync = ph.filter(p => Math.abs(p) < 0.06).length, bloom = smooth(4.8, 7.4, u);
+      screen(() => {
+        world(0.06 + 0.8 * bloom, { t: u, glow: bloom * beat(u) });
+        const fr = ((u % 1) + 1) % 1;
+        g.strokeStyle = `rgba(255,240,215,${(1 - fr) * 0.85})`; g.lineWidth = 3;
+        g.beginPath(); g.arc(640, SY + 86, 14 + 54 * fr, 0, TAU); g.stroke();
+        g.fillStyle = `rgba(255,240,215,${0.5 + 0.5 * beat(u)})`; g.beginPath(); g.arc(640, SY + 86, 9, 0, TAU); g.fill();
+        tag(SX + SW - 80, SY + 30, `IN SYNC ${inSync}/3`, inSync === 3 ? GREEN : RED, 1);
+      });
+      for (let i = 0; i < 3; i++) {
+        const b = beat(u - ph[i]);
+        player(PX[i], { hy: 492 - 18 * b, core: EL[ELS[i]], glow: 0.35 + 0.65 * b });
+        g.fillStyle = rgba(EL[ELS[i]], 0.25 + 0.75 * b); g.beginPath(); g.arc(PX[i] + 34, 428, 7, 0, TAU); g.fill();
+      }
+      tag(PX[2] + 120, 470, 'OFF BEAT', RED, 1 - smooth(3.6, 4.2, u));
+      tag(PX[2] + 120, 470, 'ON BEAT', GREEN, smooth(4.6, 5, u));
+    } },
+
+  { sec: 2, title: 'Catch and deliver', cap: "Your element appears as a floating light. Catch it with your controller's cursor and carry it to the spot that needs it.", dur: 8.5,
+    draw(u) {
+      const L0 = { x: SX + 540 + Math.sin(u * 1.3) * 18, y: SY + 80 + Math.sin(u * 2.1) * 8 }, P = { x: SX + 170, y: GY + 26 };
+      const c1 = ease(smooth(0.8, 2.4, u)), c2 = ease(smooth(3, 5.2, u)), drop = smooth(5.3, 5.9, u), bloom = smooth(5.8, 7.6, u);
+      let cur = { x: lerp(SX + 300, L0.x, c1), y: lerp(SY + 170, L0.y, c1) };
+      if (c2 > 0) cur = { x: lerp(L0.x, P.x, c2), y: lerp(L0.y, P.y - 60, c2) };
+      const light = u < 2.5 ? L0 : drop <= 0 ? cur : { x: P.x, y: lerp(P.y - 60, P.y, drop) };
+      const grow = xr => 0.12 + 0.85 * bloom * Math.exp(-Math.pow((SX + xr * SW - P.x) / 90, 2));
+      screen(() => {
+        world(grow, { t: u, avg: 0.2 });
+        if (bloom < 1) { g.fillStyle = `rgba(110,72,35,${0.55 * (1 - bloom)})`; g.beginPath(); g.ellipse(P.x, P.y + 6, 70, 13, 0, 0, TAU); g.fill(); }
+        if (drop < 1 || u < 6.2) {
+          const la = 1 - smooth(5.9, 6.3, u);
+          g.save(); g.globalCompositeOperation = 'lighter';
+          const gr = g.createRadialGradient(light.x, light.y, 1, light.x, light.y, 26);
+          gr.addColorStop(0, `rgba(255,230,150,${0.95 * la})`); gr.addColorStop(1, 'rgba(255,230,150,0)');
+          g.fillStyle = gr; g.fillRect(light.x - 26, light.y - 26, 52, 52); g.restore();
+        }
+        if (drop > 0 && u < 6.6) { const fr = smooth(5.8, 6.6, u); g.strokeStyle = `rgba(255,230,150,${1 - fr})`; g.lineWidth = 3; g.beginPath(); g.arc(P.x, P.y, 10 + 70 * fr, 0, TAU); g.stroke(); }
+        const ca = 1 - smooth(5.6, 6, u);
+        g.strokeStyle = rgba(EL.sun, ca); g.lineWidth = 2.5; g.beginPath(); g.arc(cur.x, cur.y, 16, 0, TAU); g.stroke();
+        g.beginPath(); g.moveTo(cur.x - 24, cur.y); g.lineTo(cur.x - 10, cur.y); g.moveTo(cur.x + 10, cur.y); g.lineTo(cur.x + 24, cur.y); g.stroke();
+        tag(P.x, P.y + 46, 'NEEDS SUN', RED, (0.6 + 0.4 * Math.sin(u * 5)) * (1 - bloom));
+        tag(cur.x + 70, cur.y - 26, 'CAUGHT', EL.sun, smooth(2.4, 2.6, u) * (1 - smooth(3.4, 3.8, u)));
+      });
+      ray(PX[0] + 34, 462, cur.x, cur.y + 18, EL.sun, 1 - smooth(5.6, 6, u));
+      player(PX[1], { core: EL.water, glow: 0.35 }); player(PX[2], { core: EL.seeds, glow: 0.35 });
+      player(PX[0], { core: EL.sun, glow: 1, rot: clamp(Math.atan2(cur.y - 492, cur.x - PX[0] - 34) + PI / 2, -0.8, 0.8) });
+    } },
+
+  { sec: 3, title: 'Each person sees what someone else needs', cap: "Your controller buzzes or glows when the field needs a different element than yours, so you have to tell the right person.", dur: 8,
+    draw(u) {
+      const Pt = { x: SX + 560, y: GY + 24 };
+      const buzz = smooth(0.8, 1.1, u) * (1 - smooth(4.6, 5, u)), pour = smooth(4.6, 5.2, u) * (1 - smooth(7.4, 7.8, u)), rec = smooth(5.4, 7.2, u);
+      const grow = xr => Math.abs(SX + xr * SW - Pt.x) < 110 ? 0.2 + 0.6 * rec : 0.75;
+      screen(() => {
+        world(grow, { t: u, avg: 0.65 });
+        g.fillStyle = `rgba(120,85,45,${0.45 * (1 - rec)})`; g.beginPath(); g.ellipse(Pt.x, Pt.y + 6, 105, 18, 0, 0, TAU); g.fill();
+        const da = (1 - rec) * (0.6 + 0.4 * Math.sin(u * 6));
+        g.fillStyle = rgba(EL.water, da); g.beginPath(); g.moveTo(Pt.x, Pt.y - 92); g.quadraticCurveTo(Pt.x + 14, Pt.y - 70, Pt.x, Pt.y - 60); g.quadraticCurveTo(Pt.x - 14, Pt.y - 70, Pt.x, Pt.y - 92); g.fill();
+        rainAt(Pt.x, pour, u, 140);
+      });
+      const bx = PX[0] + 34 + Math.sin(u * 60) * 3 * buzz;
+      player(PX[0], { hx: bx, core: EL.sun, glow: 0.6 });
+      g.strokeStyle = rgba(EL.water, buzz * (0.6 + 0.4 * Math.sin(u * 10))); g.lineWidth = 3; g.beginPath(); g.arc(bx, 492, 42, 0, TAU); g.stroke();
+      shakeLines(bx, 492, buzz * 0.8);
+      player(PX[1], { rot: 1.1 * pour, core: EL.water, glow: 0.5 + 0.5 * pour });
+      player(PX[2], { core: EL.seeds, glow: 0.5 });
+      tag(PX[0] + 34, 432, 'BUZZ: FIELD NEEDS WATER', EL.water, buzz);
+      bubble(560, 552, 'Water! Over there!', 448, 586, smooth(2.4, 2.7, u) * (1 - smooth(5.4, 5.8, u)));
+    } },
+
+  { sec: 3, title: 'The pieces fit together', cap: 'The three controllers are parts of one seed pod. For the butterfly reveal, the group brings them together and joins them.', dur: 8.5,
+    draw(u) {
+      const C = { x: 640, y: 474 }, e = ease(smooth(1, 3.8, u)), click = smooth(3.9, 4.1, u), dusk = smooth(4.4, 5.6, u), bf = smooth(4.9, 6.2, u);
+      screen(() => { world(0.8, { t: u, dark: dusk * 0.7, glow: dusk * 0.5 }); bfly(640, SY + 126, 0.4 + 0.5 * bf, 0.2 + 0.8 * (0.5 + 0.5 * Math.sin(u * 7)), bf); });
+      const pos = PX.map(x => ({ x: lerp(x + 34, C.x, e), y: lerp(492, C.y, e) }));
+      PX.forEach((x, i) => arm(x, pos[i].x, pos[i].y));
+      PX.forEach(x => body(x));
+      if (click > 0) {
+        g.save(); g.globalCompositeOperation = 'lighter';
+        const gr = g.createRadialGradient(C.x, C.y, 4, C.x, C.y, 90); gr.addColorStop(0, `rgba(255,236,190,${0.6 * click})`); gr.addColorStop(1, 'rgba(255,236,190,0)');
+        g.fillStyle = gr; g.fillRect(C.x - 90, C.y - 90, 180, 180); g.restore();
+      }
+      PX.forEach((x, i) => ctrl('wedge', pos[i].x, pos[i].y, { k: i, core: EL[ELS[i]], glow: 0.6 + 0.4 * click }));
+      const fr = smooth(3.9, 4.8, u);
+      if (fr > 0 && fr < 1) { g.strokeStyle = `rgba(255,240,220,${1 - fr})`; g.lineWidth = 3; g.beginPath(); g.arc(C.x, C.y, 34 + 90 * fr, 0, TAU); g.stroke(); }
+      tag(C.x, C.y - 60, 'CLICK', [255, 236, 190], smooth(3.9, 4.2, u) * (1 - smooth(6, 6.4, u)));
+      tag(C.x, C.y - 60, 'BUTTERFLY UNLOCKED', EL.seeds, smooth(6.4, 6.8, u));
+    } },
+
+  { sec: 3, title: 'More controllers than elements', cap: 'Extra controllers hold wind, pollinators or night, so the group has to work out which ones matter.', dur: 8,
+    draw(u) {
+      const P5 = [300, 470, 640, 810, 980], els = ['sun', 'wind', 'water', 'night', 'seeds'];
+      const on = els.map((_, i) => smooth(0.6 + i * 0.5, 1 + i * 0.5, u)), down = smooth(5.2, 6, u), nightA = on[3] * (1 - down);
+      screen(() => {
+        world(0.15 + 0.55 * smooth(2, 7.5, u), { t: u, dark: nightA * 0.6, wind: on[1] });
+        els.forEach((el, i) => { if (el === 'wind') windFx(on[i], u); else effect(el, clamp(P5[i] + 28, SX + 60, SX + SW - 60), on[i], u); });
+      });
+      els.forEach((el, i) => player(P5[i], { sc: 0.82, hx: P5[i] + 28, hy: i === 3 ? 492 + 110 * down : 492, core: EL[el], glow: i === 3 ? on[i] * (1 - down) : on[i] }));
+      const ta = smooth(3.6, 4, u);
+      tag(P5[0] + 28, 432, 'NEEDED', GREEN, ta); tag(P5[2] + 28, 432, 'NEEDED', GREEN, ta); tag(P5[4] + 28, 432, 'NEEDED', GREEN, ta);
+      tag(P5[1] + 28, 432, 'WIND: HARMLESS?', GREY, ta);
+      tag(P5[3] + 28, 432, 'NIGHT: HURTS', RED, ta * (1 - smooth(5.2, 5.6, u)));
+      tag(P5[3] + 28, 432, 'PUT IT DOWN', GREY, smooth(5.6, 6, u));
+    } },
+
+  { sec: 3, title: 'Hand it off', cap: 'Your element only works for a while. Then it has to be passed to a stranger to recharge.', dur: 8,
+    draw(u) {
+      const S = 170, enter = smooth(1.8, 2.8, u), pass = ease(smooth(3.4, 4.6, u));
+      const charge = u < 3.4 ? 1 - smooth(0.4, 3, u) : smooth(4.8, 6.4, u);
+      const from = { x: PX[0] + 34, y: 492 }, to = { x: S + 34, y: 492 };
+      const cp = { x: lerp(from.x, to.x, pass), y: lerp(from.y, to.y, pass) - Math.sin(pass * PI) * 70 };
+      screen(() => { world(0.2 + 0.4 * smooth(5, 7.5, u), { t: u }); effect('sun', TH[0], charge, u); effect('water', TH[1], 1, u); effect('seeds', TH[2], 1, u); });
+      if (enter > 0.01) { if (pass > 0.85) arm(S, cp.x, cp.y, 1, enter); body(lerp(70, S, enter), null, 1, enter); }
+      if (pass < 0.15) arm(PX[0], cp.x, cp.y); body(PX[0]);
+      ctrl('pod', cp.x, cp.y, { core: EL.sun, glow: charge });
+      if (pass < 0.15 || pass > 0.85) hand(cp.x, cp.y);
+      g.fillStyle = 'rgba(255,255,255,0.15)'; rrect(cp.x - 30, cp.y - 54, 60, 8, 4); g.fill();
+      g.fillStyle = rgba(EL.sun); rrect(cp.x - 30, cp.y - 54, Math.max(4, 60 * charge), 8, 4); g.fill();
+      player(PX[1], { core: EL.water, glow: 1 }); player(PX[2], { core: EL.seeds, glow: 1 });
+      tag(PX[0] + 34, 432, 'EMPTY: PASS IT ON', EL.sun, smooth(2.8, 3.1, u) * (1 - smooth(3.6, 3.9, u)));
+      tag(S + 34, 432, 'RECHARGED', EL.sun, smooth(6.2, 6.5, u));
+      tag(S, 560, 'A STRANGER', GREY, smooth(2.2, 2.6, u) * (1 - smooth(5.6, 6, u)));
+    } },
+
+  { sec: 4, title: 'What the shared controller could be', cap: 'Five possible forms. Any of them could hide the same sensors inside.', dur: 12.5,
+    draw(u) {
+      const X = [184, 412, 640, 868, 1096], act = Math.min(4, Math.floor(u / 2.4)), lu = u - act * 2.4;
+      g.fillStyle = '#1b1d23'; g.fillRect(0, 600, W, H - 600);
+      const names = ['Seed pod or river stone', 'Lantern', 'Flower bud', 'Branch wand', 'Terrarium jar'];
+      const lines = ['carved, fits in one hand', 'glass or 3D-printed, LED inside', 'opens for the butterfly (servo)', 'garden version of the sword', 'a tiny living world in your hand'];
+      X.forEach((x, i) => {
+        const isAct = i === act, on = isAct ? smooth(0.2, 0.8, lu) : i < act ? 0.3 : 0;
+        if (isAct) {
+          g.save(); g.globalCompositeOperation = 'lighter';
+          const gr = g.createLinearGradient(0, 120, 0, 600); gr.addColorStop(0, 'rgba(255,245,220,0.02)'); gr.addColorStop(1, `rgba(255,245,220,${0.14 * on})`);
+          g.fillStyle = gr; g.beginPath(); g.moveTo(x - 30, 120); g.lineTo(x + 30, 120); g.lineTo(x + 120, 600); g.lineTo(x - 120, 600); g.closePath(); g.fill(); g.restore();
+        }
+        g.fillStyle = '#23262d'; g.fillRect(x - 70, 470, 140, 130); g.fillStyle = '#2d3139'; g.fillRect(x - 70, 470, 140, 8);
+        if (i === 0) { ctrl('pod', x - 26, 412, { s: 1.9, core: EL.sun, glow: on }); ctrl('stone', x + 40, 444, { s: 1.3, core: EL.water, glow: on }); }
+        if (i === 1) ctrl('lantern', x, 424, { s: 2, core: EL.sun, glow: on });
+        if (i === 2) ctrl('bud', x, 379, { s: 1.9, core: EL.seeds, glow: on, open: isAct ? smooth(0.4, 1.6, lu) : i < act ? 1 : 0 });
+        if (i === 3) ctrl('wand', x, 387, { s: 1.8, core: EL.water, glow: on, rot: -0.12 });
+        if (i === 4) ctrl('jar', x, 418, { s: 2, core: EL.seeds, glow: on, open: isAct ? smooth(0.3, 1.4, lu) : i < act ? 1 : 0 });
+        g.textAlign = 'center';
+        g.font = `600 16px ${SANS}`; g.fillStyle = isAct ? '#ece6d8' : '#8b909a'; g.fillText(names[i], x, 640);
+        g.font = `13px ${SANS}`; g.fillStyle = isAct ? '#b9bcc4' : '#6f747e'; g.fillText(lines[i], x, 662);
+        g.textAlign = 'left';
+      });
+    } },
+
+  { sec: 0, title: 'Which one do we test first?', cap: 'Every variation here is an idea to test, not a decision.', dur: 6,
+    draw(u) {
+      screen(() => { world(0.9, { t: u, glow: 0.35 }); bfly(640 + Math.sin(u * 0.8) * 120, SY + 108 + Math.sin(u * 1.6) * 14, 0.7, 0.2 + 0.9 * (0.5 + 0.5 * Math.sin(u * 8)), smooth(0.3, 1.2, u)); });
+      for (let i = 0; i < 3; i++) player(PX[i], { core: EL[ELS[i]], glow: 1, rim: EL[ELS[i]] });
+    } },
+];
+const STARTS = []; let LEN = 0;
+SECS.forEach(s => { s.count = 0; });
+SCENES.forEach(s => { STARTS.push(LEN); LEN += s.dur; s.n = ++SECS[s.sec].count; });
+
+function header(sc) {
+  const S = SECS[sc.sec];
+  g.textAlign = 'left'; g.font = `700 13px ${MONO}`; g.fillStyle = S.col;
+  g.fillText(sc.sec > 0 ? `${S.label}  ·  ${sc.n} / ${S.count}` : S.label, 40, 36);
+  g.font = `32px ${SERIF}`; g.fillStyle = '#ece6d8'; g.fillText(sc.title, 40, 74);
+  let fs = 17; g.font = `${fs}px ${SANS}`;
+  while (g.measureText(sc.cap).width > W - 80 && fs > 12) { fs--; g.font = `${fs}px ${SANS}`; }
+  g.fillStyle = '#b9bcc4'; g.fillText(sc.cap, 40, 102);
+  g.textAlign = 'right'; g.font = `11px ${MONO}`;
+  g.fillStyle = '#e8a66a'; g.fillText('ILLUSTRATIVE MOCKUP · NOT A WORKING PROTOTYPE', W - 40, 30);
+  g.fillStyle = '#7d828c'; g.fillText('The Living Ecosystem · controller ideas', W - 40, 47);
+  g.textAlign = 'left';
+}
+function sceneAt(t) { let i = 0; while (i < SCENES.length - 1 && t >= STARTS[i + 1]) i++; return i; }
+function render(t) {
+  const i = sceneAt(t), sc = SCENES[i], u = t - STARTS[i];
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.setLineDash([]);
+  g.fillStyle = '#15171c'; g.fillRect(0, 0, W, H);
+  const rg = g.createRadialGradient(640, 560, 40, 640, 560, 640);   // light spilling from the screen into the room
+  rg.addColorStop(0, 'rgba(66,74,96,0.85)'); rg.addColorStop(1, 'rgba(66,74,96,0)');
+  g.fillStyle = rg; g.fillRect(0, 110, W, H - 110);
+  sc.draw(u, sc.dur);
+  g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+  header(sc);
+  g.fillStyle = 'rgba(255,255,255,0.08)'; g.fillRect(0, 0, W, 3);
+  g.fillStyle = SECS[sc.sec].col; g.fillRect(0, 0, W * t / LEN, 3);
+  const fade = Math.max(0, 1 - u / 0.35, 1 - (sc.dur - u) / 0.35);
+  if (fade > 0) { g.fillStyle = `rgba(0,0,0,${0.9 * fade})`; g.fillRect(0, 0, W, H); }
+  return i;
+}
+
+/* ---------- playback, chapters, recording ---------- */
+const params = new URLSearchParams(location.search);
+let t = 0, playing = true, last = performance.now(), rec = null, curScene = -1;
+const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+const chap = $('chap');
+SCENES.forEach((s, i) => { const b = document.createElement('button'); b.textContent = `${i}. ${s.title}`; b.onclick = () => { t = STARTS[i] + 0.4; }; chap.appendChild(b); });
+$('play').onclick = () => { playing = !playing; if (t >= LEN - 0.01) t = 0; };
+$('scrub').oninput = e => { t = e.target.value / 1000 * LEN; };
+addEventListener('keydown', e => { if (e.code === 'Space') { playing = !playing; e.preventDefault(); } });
+
+function startRec(auto) {
+  if (rec) return;
+  if (!cv.captureStream || !window.MediaRecorder) { alert('Recording needs a recent Chrome, Edge or Firefox.'); return; }
+  const mt = ['video/mp4;codecs=avc1.640028', 'video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m));
+  const chunks = [];
+  rec = new MediaRecorder(cv.captureStream(30), { mimeType: mt, videoBitsPerSecond: 6e6 });
+  rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  rec.onstop = () => {
+    const blob = new Blob(chunks, { type: mt.split(';')[0] });
+    const ext = mt.startsWith('video/mp4') ? 'mp4' : 'webm';
+    if (auto) {
+      const fr = new FileReader();
+      fr.onload = () => { window.__recB64 = String(fr.result).split(',')[1]; window.__recExt = ext; window.__recDone = true; };
+      fr.readAsDataURL(blob);
+    } else {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `matching-controllers-reel.${ext}`; a.click();
+      $('rec').textContent = 'Record video';
+    }
+    rec = null;
+  };
+  t = 0; playing = true; window.__frames = 0; window.__recStart = performance.now(); rec.start(1000);
+  $('rec').textContent = 'Recording… (plays once, then downloads)';
+}
+$('rec').onclick = () => startRec(false);
+
+if (params.has('t')) { t = clamp(+params.get('t'), 0, LEN - 0.01); playing = false; }
+if (params.has('scene')) { t = STARTS[+params.get('scene')] + (+params.get('u') || 1); playing = false; }
+
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (playing) {
+    t += dt;
+    if (t >= LEN) { if (rec) { t = LEN - 0.001; playing = false; rec.stop(); } else t %= LEN; }
+  }
+  const i = render(t);
+  window.__frames = (window.__frames || 0) + 1;
+  if (i !== curScene) { curScene = i; [...chap.children].forEach((b, k) => b.classList.toggle('cur', k === i)); }
+  $('play').textContent = playing ? 'Pause' : 'Play';
+  $('scrub').value = Math.round(t / LEN * 1000);
+  $('time').textContent = `${fmt(t)} / ${fmt(LEN)}`;
+  requestAnimationFrame(frame);
+}
+window.onerror = (m, src, line) => { document.title = 'ERROR: ' + m + ' @' + line; const p = $('hint'); p.style.color = '#e8785f'; p.textContent = 'Error: ' + m + ' (line ' + line + ')'; };
+if (params.get('record') === '1') startRec(true);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

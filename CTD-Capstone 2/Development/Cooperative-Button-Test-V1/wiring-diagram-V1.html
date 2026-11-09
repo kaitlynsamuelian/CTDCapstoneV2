@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cooperative Button Test: Wiring V1</title>
+<style>
+  html, body { margin: 0; background: #fff; }
+  svg { display: block; font-family: Helvetica, Arial, sans-serif; }
+  .pinlabel { font-size: 26px; font-weight: 700; fill: #fff; }
+  .rowlabel { font-size: 21px; font-weight: 700; fill: #1f2937; }
+  .small { font-size: 16px; fill: #4b5563; }
+  .group { font-size: 15px; font-weight: 700; fill: #6b7280; letter-spacing: 1px; }
+  .wire { fill: none; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+<svg id="d" width="1600" height="1270" viewBox="0 0 1600 1270" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const svg = document.getElementById('d');
+let out = '';
+const add = (s) => (out += s);
+
+const UNO_R = 380;      // right edge of the Uno (pin header)
+const RAIL_X = 1410;    // where wires meet the – rail
+const GND_Y = 1055;
+
+// ---- Title ----
+add(`<text x="60" y="68" font-size="40" font-weight="700" fill="#111827">Cooperative Button Test: Wiring</text>`);
+add(`<text x="60" y="104" class="small" font-size="20">Arduino Uno · 3 buttons · 5 LEDs · 5 × 220 Ω resistors (red-red-brown)</text>`);
+
+// ---- Group bands ----
+const groups = [
+  { y1: 175, y2: 470, label: 'INPUTS: ONE BUTTON PER PERSON' },
+  { y1: 495, y2: 785, label: "FEEDBACK: EACH PERSON'S LED" },
+  { y1: 810, y2: 1005, label: 'RESULT' },
+];
+groups.forEach((g) => {
+  add(`<rect x="395" y="${g.y1}" width="985" height="${g.y2 - g.y1}" rx="16" fill="#f8fafc" stroke="#e5e7eb"/>`);
+  add(`<text x="1365" y="${g.y1 + 26}" text-anchor="end" class="group">${g.label}</text>`);
+});
+
+// ---- Arduino Uno ----
+add(`<rect x="60" y="150" width="320" height="950" rx="22" fill="#00878f"/>`);
+add(`<text x="220" y="200" text-anchor="middle" font-size="28" font-weight="700" fill="#fff">ARDUINO UNO</text>`);
+add(`<text x="220" y="1080" text-anchor="middle" font-size="15" fill="#d1fae5">Pin numbers are printed on the board</text>`);
+add(`<text x="220" y="1098" text-anchor="middle" font-size="15" fill="#d1fae5">(ignore the ~ symbol)</text>`);
+add(`<rect x="${UNO_R - 44}" y="210" width="36" height="870" rx="6" fill="#111827"/>`);
+
+const pin = (y, label) => {
+  add(`<rect x="${UNO_R - 36}" y="${y - 10}" width="20" height="20" fill="#9ca3af"/>`);
+  add(`<text x="${UNO_R - 60}" y="${y + 9}" text-anchor="end" class="pinlabel">${label}</text>`);
+};
+
+// ---- – rail (breadboard) ----
+add(`<rect x="1395" y="165" width="70" height="915" rx="10" fill="#f3efe6" stroke="#d6d0c4" stroke-width="2"/>`);
+add(`<line x1="1452" y1="180" x2="1452" y2="1065" stroke="#2563eb" stroke-width="5"/>`);
+for (let y = 190; y < 1065; y += 30) add(`<rect x="${RAIL_X - 5}" y="${y}" width="10" height="10" rx="2" fill="#9ca3af"/>`);
+add(`<text x="1495" y="560" font-size="26" font-weight="700" fill="#2563eb" transform="rotate(90 1495 560)" text-anchor="middle">– RAIL (blue line on breadboard)</text>`);
+
+// ---- Parts ----
+function button(y, color, name) {
+  pin(y, ['2', '3', '4'][name - 1]);
+  add(`<text x="410" y="${y - 22}" class="rowlabel">pin ${['2', '3', '4'][name - 1]} → Button ${name}</text>`);
+  // pin -> top-left leg
+  add(`<path class="wire" stroke="${color}" d="M${UNO_R - 26} ${y} H 690 V ${y - 25} H 722"/>`);
+  // bottom-right leg -> rail
+  add(`<path class="wire" stroke="#111827" d="M818 ${y + 25} H ${RAIL_X}"/>`);
+  // button body + 4 legs
+  [[-1, -25], [-1, 25], [1, -25], [1, 25]].forEach(([s, dy]) => {
+    const used = (s === -1 && dy === -25) || (s === 1 && dy === 25);
+    add(`<rect x="${s < 0 ? 714 : 806}" y="${y + dy - 5}" width="20" height="10" fill="${used ? '#6b7280' : '#d1d5db'}"/>`);
+  });
+  add(`<rect x="730" y="${y - 40}" width="80" height="80" rx="8" fill="#374151"/>`);
+  add(`<circle cx="770" cy="${y}" r="22" fill="${color}"/>`);
+  add(`<text x="840" y="${y - 12}" class="small">use diagonal legs</text>`);
+  add(`<text x="1100" y="${y + 18}" class="small">Person ${name}</text>`);
+}
+
+function led(y, pinLabel, color, title, wireColor) {
+  pin(y, pinLabel);
+  add(`<text x="410" y="${y - 22}" class="rowlabel">pin ${pinLabel.replace('~', '')} → ${title}</text>`);
+  add(`<path class="wire" stroke="${wireColor}" d="M${UNO_R - 26} ${y} H 760"/>`);
+  // legs: long (+) on the left, short (–) on the right
+  add(`<line x1="770" y1="${y - 26}" x2="770" y2="${y + 22}" stroke="#9ca3af" stroke-width="5"/>`);
+  add(`<line x1="796" y1="${y - 26}" x2="796" y2="${y + 4}" stroke="#9ca3af" stroke-width="5"/>`);
+  // LED dome
+  add(`<path d="M760 ${y - 26} V ${y - 52} a 23 23 0 0 1 46 0 V ${y - 26} Z" fill="${color}" stroke="#111827" stroke-width="2"/>`);
+  add(`<rect x="755" y="${y - 30}" width="56" height="7" fill="${color}" stroke="#111827" stroke-width="2"/>`);
+  add(`<text x="700" y="${y + 30}" class="small" text-anchor="end">long leg (+)</text>`);
+  add(`<text x="830" y="${y - 40}" class="small">short leg (–)</text>`);
+  // short leg -> resistor -> rail
+  add(`<path class="wire" stroke="#111827" d="M796 ${y + 4} V ${y + 4} H 905"/>`);
+  add(`<rect x="905" y="${y - 10}" width="130" height="28" rx="12" fill="#e9d6a8" stroke="#a8916a" stroke-width="2"/>`);
+  [[930, '#dc2626'], [952, '#dc2626'], [974, '#7c3f1d'], [1010, '#c9a227']].forEach(([x, c]) =>
+    add(`<rect x="${x}" y="${y - 10}" width="9" height="28" fill="${c}"/>`));
+  add(`<text x="970" y="${y - 20}" class="small" text-anchor="middle">220 Ω</text>`);
+  add(`<path class="wire" stroke="#111827" d="M1035 ${y + 4} H ${RAIL_X}"/>`);
+}
+
+const P = ['#3b82f6', '#8b5cf6', '#f59e0b']; // person colors
+button(255, P[0], 1);
+button(350, P[1], 2);
+button(445, P[2], 3);
+led(570, '8', P[0], 'Button 1 LED', P[0]);
+led(665, '~9', P[1], 'Button 2 LED', P[1]);
+led(760, '~10', P[2], 'Button 3 LED', P[2]);
+led(880, '~11', '#ef4444', 'Red LED (miss)', '#ef4444');
+led(975, '12', '#22c55e', 'Green LED (success!)', '#22c55e');
+
+// ---- GND ----
+pin(GND_Y, 'GND');
+add(`<path class="wire" stroke="#111827" d="M${UNO_R - 26} ${GND_Y} H ${RAIL_X}"/>`);
+add(`<text x="410" y="${GND_Y - 16}" class="rowlabel">GND → – rail (connects every part back to the Uno)</text>`);
+
+// ---- Tips ----
+const tips = [
+  ['Black wires', 'All end on the – rail. The rail connects to Uno GND.'],
+  ['Make it cooperative', 'Spread the 3 buttons apart (long wires or 3 sides of a table) so 1 person can\'t reach them all.'],
+  ['Quick check', 'Each button lights its own LED. All 3 within 500 ms → green LED.'],
+];
+tips.forEach(([h, t], i) => {
+  const x = 60 + i * 480;
+  add(`<rect x="${x}" y="1130" width="455" height="115" rx="14" fill="#fff7ed" stroke="#fed7aa"/>`);
+  add(`<text x="${x + 20}" y="1165" font-size="20" font-weight="700" fill="#9a3412">${h}</text>`);
+  add(`<foreignObject x="${x + 20}" y="1175" width="420" height="65"><div xmlns="http://www.w3.org/1999/xhtml" style="font:17px Helvetica,Arial,sans-serif;color:#374151;line-height:1.35">${t}</div></foreignObject>`);
+});
+
+svg.innerHTML = out;
+</script>
+</body>
+</html>

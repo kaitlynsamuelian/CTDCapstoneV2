@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cooperative Button Test: Wiring V3 (two buttons, step by step)</title>
+<style>
+  html, body { margin: 0; background: #fff; }
+  svg { display: block; font-family: Helvetica, Arial, sans-serif; }
+  .pinlabel { font-size: 26px; font-weight: 700; fill: #fff; }
+  .rowlabel { font-size: 21px; font-weight: 700; fill: #1f2937; }
+  .small { font-size: 16px; fill: #4b5563; }
+  .group { font-size: 15px; font-weight: 700; fill: #6b7280; letter-spacing: 1px; }
+  .wire { fill: none; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+<!-- Open with ?step=1 … ?step=7 (7 = complete). No step = complete. -->
+<svg id="d" width="1600" height="1270" viewBox="0 0 1600 1270" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const STEPS = [
+  { title: 'Ground wire', parts: ['gnd'],
+    text: 'Plug a black wire from the Uno\'s <b>GND</b> pin into the <b>– rail</b> (the long strip next to the blue line) on your breadboard. Every part connects back to this rail.' },
+  { title: 'Button 1', parts: ['b1'],
+    text: 'Push <b>Button 1</b> across the breadboard\'s middle gap (or put it on long wires). Wire <b>pin 2</b> to one leg, and the <b>diagonally opposite leg</b> to the – rail. No resistor needed.' },
+  { title: 'Button 2', parts: ['b2'],
+    text: 'Same as Button 1: <b>pin 3 → Button 2</b>, diagonal leg to the – rail. Put the 2 buttons <b>more than an arm span apart</b> (or on opposite sides of a table) so one person can\'t press both.' },
+  { title: 'One LED per button', parts: ['l1', 'l2'],
+    text: 'LED <b>long leg (+)</b> → <b>pin 8 and pin 9</b>. Short leg (–) → a <b>220 Ω resistor</b> → – rail. LEDs only work one way round; resistors work either way. Match colors to buttons if you can.' },
+  { title: 'Red LED (miss)', parts: ['red'],
+    text: 'Red LED long leg → <b>pin 11</b>. Short leg → 220 Ω resistor → – rail. It blinks when the group isn\'t fast enough.' },
+  { title: 'Green LED (success)', parts: ['green'],
+    text: 'Green LED long leg → <b>pin 12</b>. Short leg → 220 Ω resistor → – rail. It lights up when both people press within 500 ms.' },
+  { title: 'Complete', parts: [] },
+];
+const ORDER = ['gnd', 'b1', 'b2', 'l1', 'l2', 'red', 'green'];
+
+const stepNum = Math.min(7, Math.max(1, Number(new URLSearchParams(location.search).get('step')) || 7));
+const isFinal = stepNum === 7;
+const step = STEPS[stepNum - 1];
+// Parts placed so far (all of them on the final step).
+const placed = new Set(isFinal ? ORDER : STEPS.slice(0, stepNum).flatMap((s) => s.parts));
+const isNew = (id) => step.parts.includes(id);
+const opacityOf = (id) => (isFinal || isNew(id) ? 1 : 0.28);
+
+const svg = document.getElementById('d');
+let out = '';
+const add = (s) => (out += s);
+
+const UNO_R = 380;
+const RAIL_X = 1410;
+const GND_Y = 1005;
+
+// ---- Title + progress dots ----
+add(`<text x="60" y="68" font-size="40" font-weight="700" fill="#111827">${isFinal ? 'Complete: 2-button Cooperative Test wiring' : `Step ${stepNum} of 7: ${step.title}`}</text>`);
+add(`<text x="60" y="104" class="small" font-size="20">Arduino Uno · 2 buttons · 4 LEDs · 4 × 220 Ω resistors (red-red-brown)${isFinal ? '' : ' · <tspan fill="#a16207" font-weight="700">yellow = do this step</tspan>'}</text>`);
+for (let i = 1; i <= 7; i++) {
+  const x = 1250 + (i - 1) * 42;
+  add(`<circle cx="${x}" cy="62" r="15" fill="${i <= stepNum ? '#111827' : '#e5e7eb'}"/>`);
+  add(`<text x="${x}" y="68" text-anchor="middle" font-size="15" font-weight="700" fill="${i <= stepNum ? '#fff' : '#6b7280'}">${i === 7 ? '✓' : i}</text>`);
+}
+
+// ---- Group bands ----
+[
+  { y1: 175, y2: 400, label: 'INPUTS: ONE BUTTON PER PERSON' },
+  { y1: 415, y2: 680, label: "FEEDBACK: EACH PERSON'S LED" },
+  { y1: 695, y2: 955, label: 'RESULT' },
+].forEach((g) => {
+  add(`<rect x="395" y="${g.y1}" width="985" height="${g.y2 - g.y1}" rx="16" fill="#f8fafc" stroke="#e5e7eb"/>`);
+  add(`<text x="1365" y="${g.y1 + 26}" text-anchor="end" class="group">${g.label}</text>`);
+});
+
+// ---- Highlight bands for this step's new parts (drawn under everything else) ----
+const ROW_Y = { gnd: GND_Y, b1: 255, b2: 350, l1: 510, l2: 630, red: 780, green: 900 };
+if (!isFinal) step.parts.forEach((id) => {
+  const y = ROW_Y[id];
+  const top = id.startsWith('b') ? y - 48 : id === 'gnd' ? y - 45 : y - 85;
+  const h = id.startsWith('b') ? 92 : id === 'gnd' ? 70 : 125;
+  add(`<rect x="330" y="${top}" width="1150" height="${h}" rx="14" fill="#fde047" opacity="0.45"/>`);
+});
+
+// ---- Arduino Uno ----
+add(`<rect x="60" y="150" width="320" height="905" rx="22" fill="#00878f"/>`);
+add(`<text x="220" y="200" text-anchor="middle" font-size="28" font-weight="700" fill="#fff">ARDUINO UNO</text>`);
+add(`<rect x="${UNO_R - 44}" y="215" width="36" height="820" rx="6" fill="#111827"/>`);
+add(`<text x="60" y="1085" font-size="16" fill="#4b5563">Pin numbers are printed on the board (ignore the ~ symbol)</text>`);
+
+const pin = (y, label, id) => {
+  const o = placed.has(id) ? opacityOf(id) : 0.5;
+  add(`<rect x="${UNO_R - 36}" y="${y - 10}" width="20" height="20" fill="#9ca3af"/>`);
+  add(`<text x="${UNO_R - 60}" y="${y + 9}" text-anchor="end" class="pinlabel" opacity="${placed.has(id) ? 1 : o}">${label}</text>`);
+};
+
+// ---- – rail (breadboard) ----
+add(`<rect x="1395" y="165" width="70" height="875" rx="10" fill="#f3efe6" stroke="#d6d0c4" stroke-width="2"/>`);
+add(`<line x1="1452" y1="180" x2="1452" y2="1025" stroke="#2563eb" stroke-width="5"/>`);
+for (let y = 190; y < 1025; y += 30) add(`<rect x="${RAIL_X - 5}" y="${y}" width="10" height="10" rx="2" fill="#9ca3af"/>`);
+add(`<text x="1495" y="600" font-size="26" font-weight="700" fill="#2563eb" transform="rotate(90 1495 600)" text-anchor="middle">– RAIL (blue line on breadboard)</text>`);
+
+// ---- Parts ----
+function button(id, n, color) {
+  const y = ROW_Y[id], p = ['2', '3', '4'][n - 1];
+  pin(y, p, id);
+  if (!placed.has(id)) return;
+  add(`<g opacity="${opacityOf(id)}">`);
+  add(`<text x="410" y="${y - 22}" class="rowlabel">pin ${p} → Button ${n}</text>`);
+  add(`<path class="wire" stroke="${color}" d="M${UNO_R - 26} ${y} H 690 V ${y - 25} H 722"/>`);
+  add(`<path class="wire" stroke="#111827" d="M818 ${y + 25} H ${RAIL_X}"/>`);
+  [[-1, -25], [-1, 25], [1, -25], [1, 25]].forEach(([s, dy]) => {
+    const used = (s === -1 && dy === -25) || (s === 1 && dy === 25);
+    add(`<rect x="${s < 0 ? 714 : 806}" y="${y + dy - 5}" width="20" height="10" fill="${used ? '#6b7280' : '#d1d5db'}"/>`);
+  });
+  add(`<rect x="730" y="${y - 40}" width="80" height="80" rx="8" fill="#374151"/>`);
+  add(`<circle cx="770" cy="${y}" r="22" fill="${color}"/>`);
+  add(`<text x="840" y="${y - 8}" class="small">use diagonal legs</text>`);
+  add(`<text x="1150" y="${y + 12}" class="small" font-weight="700">Person ${n}</text>`);
+  add(`</g>`);
+}
+
+function led(id, pinLabel, color, title, wireColor) {
+  const y = ROW_Y[id];
+  pin(y, pinLabel, id);
+  if (!placed.has(id)) return;
+  add(`<g opacity="${opacityOf(id)}">`);
+  add(`<text x="410" y="${y - 22}" class="rowlabel">pin ${pinLabel.replace('~', '')} → ${title}</text>`);
+  add(`<path class="wire" stroke="${wireColor}" d="M${UNO_R - 26} ${y} H 762"/>`);
+  // legs: long (+) left, short (–) right
+  add(`<line x1="770" y1="${y - 26}" x2="770" y2="${y + 22}" stroke="#9ca3af" stroke-width="5"/>`);
+  add(`<line x1="796" y1="${y - 26}" x2="796" y2="${y + 4}" stroke="#9ca3af" stroke-width="5"/>`);
+  add(`<path d="M760 ${y - 26} V ${y - 52} a 23 23 0 0 1 46 0 V ${y - 26} Z" fill="${color}" stroke="#111827" stroke-width="2"/>`);
+  add(`<rect x="755" y="${y - 30}" width="56" height="7" fill="${color}" stroke="#111827" stroke-width="2"/>`);
+  add(`<text x="752" y="${y + 30}" class="small" text-anchor="end">long leg (+)</text>`);
+  add(`<text x="822" y="${y - 40}" class="small">short leg (–)</text>`);
+  add(`<path class="wire" stroke="#111827" d="M796 ${y + 4} H 905"/>`);
+  add(`<rect x="905" y="${y - 10}" width="130" height="28" rx="12" fill="#e9d6a8" stroke="#a8916a" stroke-width="2"/>`);
+  [[930, '#dc2626'], [952, '#dc2626'], [974, '#7c3f1d'], [1010, '#c9a227']].forEach(([x, c]) =>
+    add(`<rect x="${x}" y="${y - 10}" width="9" height="28" fill="${c}"/>`));
+  add(`<text x="970" y="${y + 42}" class="small" text-anchor="middle">220 Ω resistor</text>`);
+  add(`<path class="wire" stroke="#111827" d="M1035 ${y + 4} H ${RAIL_X}"/>`);
+  add(`</g>`);
+}
+
+const P = ['#3b82f6', '#8b5cf6', '#f59e0b']; // person colors
+button('b1', 1, P[0]);
+button('b2', 2, P[1]);
+led('l1', '8', P[0], 'Button 1 LED', P[0]);
+led('l2', '~9', P[1], 'Button 2 LED', P[1]);
+led('red', '~11', '#ef4444', 'Red LED (miss)', '#ef4444');
+led('green', '12', '#22c55e', 'Green LED (success!)', '#22c55e');
+
+pin(GND_Y, 'GND', 'gnd');
+add(`<g opacity="${opacityOf('gnd')}">`);
+add(`<path class="wire" stroke="#111827" d="M${UNO_R - 26} ${GND_Y} H ${RAIL_X}"/>`);
+add(`<text x="410" y="${GND_Y - 16}" class="rowlabel">GND → – rail (connects every part back to the Uno)</text>`);
+add(`</g>`);
+
+// ---- Bottom: this step's instruction, or tips on the final ----
+const box = (x, w, head, body, fill, stroke, headColor) => {
+  add(`<rect x="${x}" y="1115" width="${w}" height="120" rx="14" fill="${fill}" stroke="${stroke}"/>`);
+  add(`<text x="${x + 20}" y="1150" font-size="21" font-weight="700" fill="${headColor}">${head}</text>`);
+  add(`<foreignObject x="${x + 20}" y="1160" width="${w - 40}" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="font:18px Helvetica,Arial,sans-serif;color:#374151;line-height:1.35">${body}</div></foreignObject>`);
+};
+if (isFinal) {
+  [
+    ['Black wires', 'All end on the – rail. The rail connects to Uno GND.'],
+    ['Make it cooperative', 'Put the 2 buttons more than an arm span apart so 1 person can\'t press both.'],
+    ['Quick check', 'Upload the code. Each button lights its own LED; both within 500 ms → green LED.'],
+  ].forEach(([h, t], i) => box(60 + i * 480, 455, h, t, '#fff7ed', '#fed7aa', '#9a3412'));
+} else {
+  box(60, 1415, `Step ${stepNum}: ${step.title}`, step.text, '#fefce8', '#fde047', '#854d0e');
+}
+
+svg.innerHTML = out;
+</script>
+</body>
+</html>
