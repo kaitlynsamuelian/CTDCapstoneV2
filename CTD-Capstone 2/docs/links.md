@@ -42,3 +42,6 @@ These live online at claude.ai (private to Kaitlyn unless shared). Listed oldest
 - [Feasibility Tests: Additions for Our Template Doc (V2)](https://claude.ai/artifact/MfpKjtvyVRadJciwRzkXfE) (Nov 7): paste-in text for the team's Google Doc.
 - [Feasibility Tests paste-in answers V3](https://claude.ai/artifact/P3vbsCMBk9MrJ5LpQDP4EX) (Nov 7): template answers with the two-part, remarkable-together framing.
 - [Feasibility Tests Summary (V4)](https://claude.ai/artifact/W48Pdz3nKayVeCzw9RDktF) (Nov 7, current): template-only, 6 tests.
+
+## MetamorphUs
+- [MetamorphUs: Controller Research](https://claude.ai/artifact/7cZ49kqDxMPMYANUr3a76m) (Nov 11): cooperation mechanics, 16 controller ideas, sourced alt.ctrl.GDC and other precedents, sensors and costs, engagement checks, tradeoffs, next tests.
