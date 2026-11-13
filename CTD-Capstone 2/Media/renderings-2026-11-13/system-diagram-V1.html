@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MetamorphUs system diagram V1</title>
+<!-- Source for system-diagram-V1.png (1920×1080). Open in Chrome; screenshot at 1920×1080. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+<style>
+  html, body { margin: 0; background: #0E1030; }
+  .page { position: relative; width: 1920px; height: 1080px; background: #0E1030; font-family: 'Nunito Sans', Arial, sans-serif; color: #C9C6E3; overflow: hidden; }
+  h1 { position: absolute; left: 80px; top: 56px; margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 72px; font-weight: 700; color: #F4EFE6; }
+  .sub { position: absolute; left: 80px; top: 150px; font-size: 26px; color: #9C98C4; }
+  .box { position: absolute; top: 290px; width: 280px; height: 356px; box-sizing: border-box; background: #221D4E; border: 3px solid #3A3770; border-radius: 24px; padding: 26px 24px; display: flex; flex-direction: column; gap: 12px; }
+  .box.mint { border-color: #8FE3C7; }
+  .box.lav { border-color: #C3A6FF; }
+  .box .num { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 44px; font-weight: 700; color: #8FE3C7; line-height: 1; }
+  .box.lav .num { color: #C3A6FF; }
+  .box h2 { margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 38px; line-height: 1.05; color: #F4EFE6; }
+  .box p { margin: 0; font-size: 21px; line-height: 1.4; }
+  .box .tech { font-size: 18px; color: #8FE3C7; margin-top: auto; }
+  .box.lav .tech { color: #C3A6FF; }
+  .x { color: #FFD27A; font-weight: 700; }
+  svg { position: absolute; left: 0; top: 0; }
+  .label { position: absolute; font-size: 22px; color: #F4EFE6; background: #0E1030; padding: 4px 14px; border-radius: 999px; border: 2px solid #3A3770; white-space: nowrap; }
+  .caption { position: absolute; left: 80px; bottom: 44px; width: 1760px; font-size: 22px; color: #9C98C4; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>How MetamorphUs works</h1>
+  <p class="sub">From a stranger’s hands to a glowing world, and back again</p>
+
+  <div class="box mint" style="left:80px;">
+    <p class="num">1</p><h2>People</h2>
+    <p>4 to 5 strangers, one per controller</p>
+    <p class="tech">No playing alone: <span class="x">[X]</span></p>
+  </div>
+  <div class="box mint" style="left:450px;">
+    <p class="num">2</p><h2>Physical controllers</h2>
+    <p>One element each: sunlight, water, wind, heat, nutrients</p>
+    <p class="tech">Sensor inside reads the action (crank, lever, tilt…)</p>
+  </div>
+  <div class="box" style="left:820px;">
+    <p class="num">3</p><h2>Arduino</h2>
+    <p>Reads every sensor and sends each element’s level</p>
+    <p class="tech">USB + Web Serial (wireless option: ESP32)</p>
+  </div>
+  <div class="box" style="left:1190px;">
+    <p class="num">4</p><h2>Computer</h2>
+    <p>Runs the balance rules, the hold timer and the no-playing-alone rule</p>
+    <p class="tech">Software: <span class="x">[X]</span> (p5.js in our tests)</p>
+  </div>
+  <div class="box lav" style="left:1560px;">
+    <p class="num">5</p><h2>Screen or projection</h2>
+    <p>The ecosystem: barren → glowing forest → butterfly</p>
+    <p class="tech">Display: <span class="x">[X]</span></p>
+  </div>
+
+  <svg width="1920" height="1080" viewBox="0 0 1920 1080" aria-hidden="true">
+    <defs>
+      <marker id="hm" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#8FE3C7"/></marker>
+      <marker id="hl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#C3A6FF"/></marker>
+      <marker id="hc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#F4EFE6"/></marker>
+    </defs>
+    <!-- forward flow -->
+    <line x1="368" y1="455" x2="440" y2="455" stroke="#8FE3C7" stroke-width="5" marker-end="url(#hm)"/>
+    <line x1="738" y1="455" x2="810" y2="455" stroke="#8FE3C7" stroke-width="5" marker-end="url(#hm)"/>
+    <line x1="1108" y1="455" x2="1180" y2="455" stroke="#8FE3C7" stroke-width="5" marker-end="url(#hm)"/>
+    <line x1="1478" y1="455" x2="1550" y2="455" stroke="#8FE3C7" stroke-width="5" marker-end="url(#hm)"/>
+    <!-- feedback to controllers: computer -> controllers -->
+    <path d="M1330 650 C 1330 780, 590 780, 590 660" fill="none" stroke="#C3A6FF" stroke-width="4" stroke-dasharray="12 10" marker-end="url(#hl)"/>
+    <!-- the big loop: screen -> people -->
+    <path d="M1700 650 C 1700 940, 220 940, 220 660" fill="none" stroke="#F4EFE6" stroke-width="4" marker-end="url(#hc)"/>
+  </svg>
+
+  <p class="label" style="left:720px; top:728px;">Light, sound or vibration back on the controllers (optional)</p>
+  <p class="label" style="left:630px; top:842px;">People see the world react, call out to each other, and adjust together</p>
+
+  <p class="caption">How MetamorphUs works: each controller sends its element’s level to the computer, which checks the balance rules and grows the world. <span class="x">[X]</span> marks choices the team has not made yet.</p>
+</div>
+</body>
+</html>

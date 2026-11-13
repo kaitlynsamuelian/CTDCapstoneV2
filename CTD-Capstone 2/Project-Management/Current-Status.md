@@ -1,5 +1,7 @@
 # Current status — October 21, 2026
 
+> Out of date: see `Current-Status-2026-11-13.md` for the latest status. Kept as history.
+
 ## Stage
 Week 9: open-ended exploration + precedent research. **No final concept, audience, medium, technology, or format selected.**
 

@@ -44,4 +44,45 @@ These live online at claude.ai (private to Kaitlyn unless shared). Listed oldest
 - [Feasibility Tests Summary (V4)](https://claude.ai/artifact/W48Pdz3nKayVeCzw9RDktF) (Nov 7, current): template-only, 6 tests.
 
 ## MetamorphUs
-- [MetamorphUs: Controller Research](https://claude.ai/artifact/7cZ49kqDxMPMYANUr3a76m) (Nov 11): cooperation mechanics, 16 controller ideas, sourced alt.ctrl.GDC and other precedents, sensors and costs, engagement checks, tradeoffs, next tests.
+- [MetamorphUs: Controller Research](https://claude.ai/artifact/7cZ49kqDxMPMYANUr3a76m) (Nov 11): cooperation mechanics, 16 controller ideas, sourced precedents, sensors and costs, engagement checks, tradeoffs, next tests.
+- [MetamorphUs Controller Research V2](https://claude.ai/artifact/GRzcMg8LhHLAHiU3sHW2WC) (Nov 13): follow-up on interview suggestions: element-matched controls, making it a little difficult, feedback (light, sound, vibration), realistic events. Handwritten-notes style.
+- [MetamorphUs: Capstone Proposal Presentation](https://claude.ai/artifact/TkqXtZZ6X44ZzAqWZ7hT9z) (Nov 13, updated): 19-slide pitch deck with speaker-note script; `[X]` and bracket placeholders for anything not yet decided.
+- [MetamorphUs Precedents](https://claude.ai/artifact/LGZw3BPmUsR6aa8cANnUJo) (Nov 13, shared publicly): 15 sourced precedents in 5 groups (6 in slides), plus loneliness and synchrony research. Handwritten-notes style.
+- [MetamorphUs Technology Research](https://claude.ai/artifact/P9p1jv3v32bVQwy3mt4kBN) (Nov 13, feasibility test 4): A physical controllers, B no playing alone, C connection and logic, D display; hands-on checks. Handwritten-notes style.
+
+## Local notes (Markdown files in this repo)
+Project management
+- [Project inventory](../Project-Management/Project-Inventory-2026-11-13.md) (Nov 13): every item and link, marked submit vs internal, plus open items.
+- [Team roles draft](../Project-Management/Team-Roles-Draft.md) (Nov 13): proposed roles and handoffs; confirm with the team, then log.
+- [Decision log](../Project-Management/Decision-Log.md): only confirmed team decisions.
+- [Working timeline](../Project-Management/Working-Timeline.md) (Oct 21): fall plan.
+- [Current status, Nov 13](../Project-Management/Current-Status-2026-11-13.md): latest status and next steps.
+- [Current status, Oct 21](../Project-Management/Current-Status.md) (out of date, kept as history).
+- [Questions for faculty](../Project-Management/Questions-for-Faculty.md)
+
+Research
+- [User interview notes](../Research/User-Interview-Notes.md) (Nov 13): professor feedback, interview notes, slots for observations and playtests.
+- [Precedent index](../Research/Precedent-Index.md)
+- [Sources](../Research/Sources.md)
+- [Precedent notes template](../Research/Precedent-Notes-Template.md)
+
+Ideation
+- [Design ideas to explore](../Ideation/Design-Ideas-To-Explore.md) (Nov 13): undecided ideas with sources, and where each kind of info is recorded.
+- [Experience design questions](../Ideation/Experience-Design-Questions.md)
+- [Venn and 50 ideas](../Ideation/Venn-and-50-Ideas.md)
+
+Exports
+- [Capstone project story](../Exports/Capstone-Project-Story-2026-11-01.md) (Nov 1)
+- [Synchrony Reward sounding board notes](../Exports/Synchrony-Reward-Sounding-Board-Notes-2026-11-05.md) (Nov 5)
+- [Proposal and feasibility additions](../Exports/Proposal-and-Feasibility-Additions-2026-11-13.md) (Nov 13): paste-ready text for the Capstone Proposal and Feasibility Tests Summary.
+- [Precedents Research Summary, MetamorphUs version](../Exports/Precedents-Research-Summary-MetamorphUs-2026-11-13.md) (Nov 13): the RMPP precedents template filled with our 15 precedents in 5 patterns, plus findings.
+
+Testing and templates
+- [Experiment template](../Testing/Experiment-Template.md)
+- [ATLAS Capstone proposal template](../Course-Materials/Templates/ATLAS-Capstone-Proposal-Template.md)
+
+## Local builds (code, wiring guides, animations)
+- [Cooperative button test](../Development/Cooperative-Button-Test-V1/README.md): 3-button and 2-button Arduino sketches, step-by-step wiring images (V2 three buttons, V3 two buttons).
+- [MetamorphUs Arduino test](../Development/MetamorphUs-Arduino-Test-V1/README.md): knobs + Bloom button to the p5.js ecosystem over Web Serial.
+- [Ecosystem Engine animation](../Media/animations-2026-11-11/ecosystem-engine-dot-lock.html) (Nov 11): barren to glowing forest to flower butterfly; open in Chrome, Record video for MP4. Add `?clean=1` for stills without meters or captions.
+- [Renderings, Nov 13](../Media/renderings-2026-11-13/CAPTIONS.md): system diagram, hero shots (barren, glowing forest, butterfly, installation scene), installation in the space (TV vs projection), each with a caption.

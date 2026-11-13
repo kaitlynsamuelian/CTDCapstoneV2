@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MetamorphUs installation in the space V1</title>
+<!-- Source for installation-in-space-V1.png (1920×1080). Front views drawn to scale: 5.5 px = 1 in. Screen sizes are standard 16:9 sizes; mounting heights are examples; spacing and footprint are [X] until the team decides. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+<style>
+  html, body { margin: 0; background: #0E1030; }
+  .page { position: relative; width: 1920px; height: 1080px; background: #0E1030; font-family: 'Nunito Sans', Arial, sans-serif; overflow: hidden; }
+  h1 { position: absolute; left: 80px; top: 44px; margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 64px; font-weight: 700; color: #F4EFE6; }
+  .sub { position: absolute; left: 80px; top: 128px; margin: 0; font-size: 24px; color: #9C98C4; }
+  .t { position: absolute; margin: 0; color: #F4EFE6; font-size: 20px; white-space: nowrap; }
+  .head { position: absolute; margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 40px; font-weight: 700; }
+  .x { color: #FFD27A; font-weight: 700; }
+  .note { position: absolute; left: 80px; bottom: 34px; width: 1760px; margin: 0; font-size: 20px; color: #9C98C4; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>MetamorphUs in the space: two display options</h1>
+  <p class="sub">Front views drawn to scale (1 in = 5.5 px). Option A: one 75 in TV. Option B: a projection about 120 in diagonal.</p>
+
+  <svg width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;left:0;top:0" aria-label="Front views of the installation with a 75 inch TV and with a 120 inch projection, people and four controllers for scale">
+    <defs>
+      <linearGradient id="scr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1B1F5E"/><stop offset="1" stop-color="#3B2F7A"/></linearGradient>
+      <marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9 z" fill="#C9C6E3"/></marker>
+    </defs>
+    <!-- divider -->
+    <line x1="960" y1="200" x2="960" y2="960" stroke="#3A3770" stroke-width="2" stroke-dasharray="8 8"/>
+
+    <!-- ===== Option A: 75 in TV (about 65 × 37 in), bottom at 38 in (example) ===== -->
+    <line x1="80" y1="900" x2="920" y2="900" stroke="#6B6890" stroke-width="3"/>
+    <rect x="330" y="491" width="358" height="203" rx="6" fill="url(#scr)" stroke="#C3A6FF" stroke-width="3"/>
+    <circle cx="420" cy="560" r="14" fill="#FFE9A8" opacity="0.9"/>
+    <path d="M360 670 q20 -60 40 0 M460 670 q25 -80 50 0 M560 670 q20 -55 40 0 M640 670 q15 -45 30 0" stroke="#8FE3C7" stroke-width="5" fill="none" opacity="0.8"/>
+    <!-- width dim -->
+    <line x1="330" y1="466" x2="688" y2="466" stroke="#C9C6E3" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
+    <!-- height dim -->
+    <line x1="712" y1="491" x2="712" y2="694" stroke="#C9C6E3" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
+    <!-- mount height dim -->
+    <!-- person for scale: 66 in -->
+    <g fill="#5E5A8A"><circle cx="150" cy="560" r="23"/><rect x="128" y="585" width="44" height="160" rx="18"/><rect x="131" y="740" width="16" height="160" rx="6"/><rect x="153" y="740" width="16" height="160" rx="6"/></g>
+    <!-- controllers -->
+    <g fill="#221D4E" stroke="#8FE3C7" stroke-width="3">
+      <rect x="353" y="736" width="66" height="164" rx="10"/><rect x="471" y="736" width="66" height="164" rx="10"/><rect x="589" y="736" width="66" height="164" rx="10"/><rect x="707" y="736" width="66" height="164" rx="10"/>
+    </g>
+    <rect x="825" y="736" width="66" height="164" rx="10" fill="none" stroke="#9C98C4" stroke-width="3" stroke-dasharray="8 6"/>
+    <line x1="386" y1="926" x2="504" y2="926" stroke="#FFD27A" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
+
+    <!-- ===== Option B: projection ~120 in (about 105 × 59 in), bottom at 30 in (example) ===== -->
+    <line x1="1000" y1="900" x2="1840" y2="900" stroke="#6B6890" stroke-width="3"/>
+    <rect x="1132" y="410" width="578" height="325" rx="4" fill="url(#scr)" stroke="#C3A6FF" stroke-width="3"/>
+    <circle cx="1270" cy="500" r="20" fill="#FFE9A8" opacity="0.9"/>
+    <path d="M1180 710 q30 -90 60 0 M1320 710 q35 -120 70 0 M1470 710 q30 -80 60 0 M1600 710 q25 -70 50 0" stroke="#8FE3C7" stroke-width="6" fill="none" opacity="0.8"/>
+    <line x1="1132" y1="385" x2="1710" y2="385" stroke="#C9C6E3" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
+    <line x1="1734" y1="410" x2="1734" y2="735" stroke="#C9C6E3" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
+    <g fill="#5E5A8A"><circle cx="1050" cy="560" r="23"/><rect x="1028" y="585" width="44" height="160" rx="18"/><rect x="1031" y="740" width="16" height="160" rx="6"/><rect x="1053" y="740" width="16" height="160" rx="6"/></g>
+    <g fill="#221D4E" stroke="#8FE3C7" stroke-width="3">
+      <rect x="1205" y="736" width="66" height="164" rx="10"/><rect x="1345" y="736" width="66" height="164" rx="10"/><rect x="1485" y="736" width="66" height="164" rx="10"/><rect x="1625" y="736" width="66" height="164" rx="10"/>
+    </g>
+    <rect x="1765" y="736" width="66" height="164" rx="10" fill="none" stroke="#9C98C4" stroke-width="3" stroke-dasharray="8 6"/>
+    <line x1="1238" y1="926" x2="1378" y2="926" stroke="#FFD27A" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
+  </svg>
+
+  <p class="head" style="left:80px; top:200px; color:#C3A6FF;">A · 75 in TV</p>
+  <p class="t" style="left:80px; top:252px; color:#C9C6E3;">Simplest to borrow; bright in a lit room.<br>Screen bottom about 38 in from the floor (example).</p>
+  <p class="t" style="left:450px; top:432px;">about 65 in wide</p>
+  <p class="t" style="left:724px; top:580px;">about 37 in</p>
+  <p class="t" style="left:108px; top:912px; color:#C9C6E3;">person 66 in</p>
+  <p class="t" style="left:396px; top:936px;"><span class="x">[X] in</span> apart</p>
+  <p class="t" style="left:806px; top:912px; color:#9C98C4;">5th (optional)</p>
+
+  <p class="head" style="left:1000px; top:200px; color:#C3A6FF;">B · Projection, about 120 in</p>
+  <p class="t" style="left:1000px; top:252px; color:#C9C6E3;">More immersive; needs a darker space and throw distance.<br>Image bottom about 30 in from the floor (example).</p>
+  <p class="t" style="left:1352px; top:350px;">about 105 in wide</p>
+  <p class="t" style="left:1746px; top:560px;">about 59 in</p>
+  <p class="t" style="left:1008px; top:912px; color:#C9C6E3;">person 66 in</p>
+  <p class="t" style="left:1250px; top:936px;"><span class="x">[X] in</span> apart</p>
+  <p class="t" style="left:1746px; top:912px; color:#9C98C4;">5th (optional)</p>
+
+  <p class="note">Footprint: <span class="x">[X] × [X] in</span> · Controller spacing: <span class="x">[X] in</span> (far enough that one person can’t run two) · Controller form not decided; boxes are drawn about 36 in tall to show scale only. Screen sizes are standard 16:9 sizes; mounting and controller heights are examples to confirm.</p>
+</div>
+</body>
+</html>
