@@ -17,7 +17,7 @@ Legend: **Submit** = goes to faculty (or is linked from something that does). **
 | Sounding Board notes | https://docs.google.com/document/d/1wjrQ3h2z5diMPLVjLFsrqyjHx-P8-KbOpSCxZI1z9Rk/edit?usp=sharing | Done | Aidan Chopra, Nov 6 |
 | User flow / journey | https://docs.google.com/document/d/1LG0V-4YNgSlc-NAbyrKjg0ZHk8bXryoafrszh2XILZs/edit?usp=sharing | Check | Make sure it matches MetamorphUs |
 | Project management timeline | https://docs.google.com/document/d/1S6FfcLnYwbiRvrorQV_TCb-bw2L-KMJ1Yf9BEl29UbI/edit?usp=sharing | Check | Iteration 1–3 dates still TBD on the slides |
-| Bill of materials | https://docs.google.com/spreadsheets/d/14BM4ShBkBZvmA29-KrYSYibdZRFezsUWCOdOIxus1Gw/edit?usp=sharing | Check | Total feeds the “surprisingly cheap” finding |
+| Bill of materials | https://docs.google.com/spreadsheets/d/14BM4ShBkBZvmA29-KrYSYibdZRFezsUWCOdOIxus1Gw/edit?usp=sharing | Updated Nov 13 | Every option listed per part; only rows marked Yes count. Estimate ~$881 with 15% contingency (~$306 if we borrow the display) |
 
 ## 2. Online pages we made (claude.ai)
 
@@ -65,5 +65,6 @@ Private to Kaitlyn unless shared from the page’s Share menu.
 - [ ] Share the private Claude pages with the team and faculty before linking them
 - [ ] Correct “p5.js tested / built” wording: the sketch is drafted, not yet tested by the team (Technology Research page, deck Test 2 and overview, additions file)
 - [ ] Confirm roles and the outside advisor (must not be the course instructor)
-- [ ] Finish interviews 3–5; add BOM total and test results
+- [ ] Finish interviews 3–5; add test results
+- [ ] Flip BOM Yes/No as options get decided; confirm whether ATLAS can lend a TV or projector
 - [ ] Decide the display tool (leaning p5.js or TouchDesigner) after a quick glow test
