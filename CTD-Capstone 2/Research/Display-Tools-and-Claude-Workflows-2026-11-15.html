@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MetamorphUs Display Tools and Claude Workflows</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Kalam:wght@300;400;700&display=swap">
+<style>
+  /* Layout idea: a research notebook, matching our other research pages. Lined paper, ink handwriting, index cards and highlighter labels. Single paper theme by choice. */
+  :root {
+    --paper: #FBF7EC; --rule: #DCE6F2; --margin: #EFA9A9; --ink: #2B2A33; --blue: #2A4BA0; --pencil: #6B6874;
+    --hl-yellow: #FFF08A; --hl-green: #C9F0D6; --hl-pink: #FFD3E2; --card: #FFFDF6;
+    --hand: 'Caveat', 'Bradley Hand', cursive; --note: 'Kalam', 'Comic Sans MS', cursive; color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--paper); }
+  body {
+    margin: 0; color: var(--ink); font-family: var(--note); font-weight: 300; font-size: 18px; line-height: 32px;
+    background-color: var(--paper);
+    background-image: linear-gradient(90deg, transparent 0, transparent 54px, var(--margin) 54px, var(--margin) 56px, transparent 56px), repeating-linear-gradient(180deg, transparent 0, transparent 31px, var(--rule) 31px, var(--rule) 32px);
+  }
+  a { color: var(--blue); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:focus-visible { outline: 2px dashed var(--blue); outline-offset: 2px; }
+  b, strong { font-weight: 700; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 28px 80px 84px; display: flex; flex-direction: column; gap: 48px; }
+  h1, h2, h3 { font-family: var(--hand); color: var(--blue); margin: 0; font-weight: 700; text-wrap: balance; }
+  h1 { font-size: clamp(48px, 7.5vw, 76px); line-height: 1.0; }
+  h2 { font-size: clamp(38px, 5vw, 50px); line-height: 1.05; background: linear-gradient(transparent 62%, var(--hl-yellow) 62%, var(--hl-yellow) 92%, transparent 92%); align-self: flex-start; padding: 0 6px; }
+  h3 { font-size: 34px; line-height: 1.05; color: var(--ink); }
+  p { margin: 0; max-width: 68ch; }
+  .eyebrow { font-family: var(--hand); font-size: 26px; font-weight: 700; color: var(--pencil); }
+  header, section { display: flex; flex-direction: column; gap: 14px; }
+  .lede { font-size: 20px; font-weight: 400; }
+  .meta { font-size: 15.5px; color: var(--pencil); }
+  .head { display: flex; flex-direction: column; gap: 6px; padding-top: 20px; border-top: 2px dashed #C9C2B0; }
+  .table-wrap { overflow-x: auto; background: var(--card); border: 1.5px solid #CFC7B3; border-radius: 4px; box-shadow: 2px 3px 0 rgba(43,42,51,0.08); }
+  table { width: 100%; border-collapse: collapse; font-size: 16.5px; line-height: 1.45; min-width: 860px; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px dashed #D8D0BD; vertical-align: top; }
+  th { font-family: var(--hand); font-size: 24px; color: var(--blue); font-weight: 700; border-bottom: 2px solid var(--blue); }
+  tr:last-child td { border-bottom: none; }
+  td.name { color: var(--ink); font-weight: 700; min-width: 130px; }
+  .pill { display: inline-block; font-family: var(--hand); font-size: 21px; font-weight: 700; line-height: 1.1; padding: 1px 8px; border-radius: 2px; white-space: nowrap; color: var(--ink); }
+  .pill.now { background: var(--hl-green); }
+  .pill.setup { background: var(--hl-yellow); }
+  .pill.less { border: 1.5px solid var(--pencil); border-radius: 12px; color: var(--pencil); }
+  .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 34px 30px; }
+  @media (max-width: 760px) { .cards { grid-template-columns: 1fr; } .wrap { padding-left: 70px; } }
+  .card { position: relative; background: var(--card); border: 1px solid #DDD5C2; border-radius: 3px; box-shadow: 3px 4px 0 rgba(43,42,51,0.09); display: flex; flex-direction: column; }
+  .card::before { content: ""; position: absolute; top: -12px; left: 50%; width: 110px; height: 24px; margin-left: -55px; background: rgba(255, 240, 160, 0.75); border: 1px solid rgba(200, 180, 90, 0.35); transform: rotate(-3deg); }
+  .card .body { padding: 22px 22px 22px; display: flex; flex-direction: column; gap: 10px; }
+  .card .top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .card dl { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+  .card dt { font-family: var(--hand); font-size: 24px; font-weight: 700; color: var(--blue); }
+  .card dd { margin: 0; font-size: 16.5px; line-height: 1.5; }
+  .card ul, .card ol { margin: 0; padding-left: 22px; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 13.5px; background: #F1ECDD; padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere; }
+  .callout { background: #FFF6A8; border-radius: 2px; padding: 26px 28px; display: flex; flex-direction: column; gap: 10px; box-shadow: 4px 6px 0 rgba(43,42,51,0.1); }
+  .callout .eyebrow { color: #8A6D00; }
+  .callout h2 { background: none; padding: 0; }
+  .callout ul, .callout ol { margin: 0; padding-left: 24px; display: flex; flex-direction: column; gap: 6px; }
+  .callout li { max-width: 80ch; line-height: 1.5; }
+  .flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 12px; align-items: stretch; }
+  .flow .box { background: var(--card); border: 2px solid var(--ink); border-radius: 14px 18px 12px 20px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; box-shadow: 2px 3px 0 rgba(43,42,51,0.1); }
+  .flow .box.s { border-color: #1F7A55; } .flow .box.d { border-color: #8B4FC9; }
+  .flow .box p { font-size: 16px; line-height: 1.45; }
+  .flow .box .eyebrow { font-size: 22px; }
+  .flow .arrow { align-self: center; font-family: var(--hand); font-size: 44px; color: var(--blue); }
+  @media (max-width: 760px) { .flow { grid-template-columns: 1fr; } .flow .arrow { transform: rotate(90deg); justify-self: center; } }
+  .sources ol { margin: 0; padding-left: 24px; display: flex; flex-direction: column; gap: 2px; font-size: 16px; }
+  ul.plain { margin: 0; padding-left: 24px; display: flex; flex-direction: column; gap: 4px; max-width: 80ch; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">MetamorphUs · Display tools research · Nov 15, 2026</p>
+  <h1>Display tools, and how Claude can build in each one</h1>
+  <p class="lede">We are choosing between p5.js, TouchDesigner, Unity and Blender for the digital world. This page compares them for MetamorphUs and answers a second question: in which of them can Claude make the actual files, animations and renders for us, and what would we have to install first?</p>
+  <p class="meta">Facts come from the linked sources, checked Nov 15, 2026. “Our read” marks judgment. Nothing here is a decision. Labels: <span class="pill now">Works today</span> <span class="pill setup">Needs setup</span> <span class="pill less">Less likely</span></p>
+</header>
+
+<section aria-labelledby="short">
+  <div class="callout">
+    <p class="eyebrow">The short version</p>
+    <h2 id="short">What we found</h2>
+    <ul>
+      <li><b>All four tools can be driven by Claude.</b> p5.js needs nothing extra. Blender, TouchDesigner and Unity each have a connector (an “MCP server”) that lets Claude control the open app.</li>
+      <li><b>Only p5.js works today on Kaitlyn’s Mac.</b> Blender, TouchDesigner, Unity, Node and uv are not installed on it (checked Nov 15). Claude already built our forest-to-butterfly animation this way.</li>
+      <li><b>Blender and TouchDesigner connectors are free and take about 15 minutes to set up.</b> Both are community projects, not made by Blender or Derivative.</li>
+      <li><b>Unity has the most official support</b> (a first-party Claude Code plugin since Sept 9, 2026), but it is the most setup and the least matched to our glowing, layered look.</li>
+      <li><b>Our read:</b> Blender is for making assets, not for running the live installation. The live world would run in p5.js, TouchDesigner or Unity, with Blender feeding it models and renders.</li>
+    </ul>
+  </div>
+</section>
+
+<section aria-labelledby="s1">
+  <div class="head"><p class="eyebrow">Part 1</p><h2 id="s1">The four tools side by side</h2><p>What each one would do in MetamorphUs, what it costs, and how Claude connects to it.</p></div>
+  <div class="table-wrap"><table>
+    <tr><th>Tool</th><th>Its job in MetamorphUs</th><th>Cost</th><th>How Claude connects</th><th>What Claude can make</th><th>Status</th></tr>
+    <tr><td class="name">p5.js</td><td>Runs the live world in a browser; reads the Arduino over Web Serial (Chrome or Edge only)</td><td>Free</td><td>Directly. Claude writes the HTML and JavaScript files and checks them with browser screenshots. No connector needed.</td><td>The whole interactive world, animation, stills for slides</td><td><span class="pill now">Works today</span></td></tr>
+    <tr><td class="name">TouchDesigner</td><td>Runs the live world as a node network; reads the Arduino through its Serial DAT</td><td>Free non-commercial version, capped at 1280 × 1280; Educational license $300</td><td>TouchDesigner MCP (community, MIT). Claude creates and wires nodes, sets parameters and runs Python in the open project.</td><td>Node networks, particle and glow effects, parameter setups; Claude can view a node’s image output to check its work</td><td><span class="pill setup">Needs setup</span></td></tr>
+    <tr><td class="name">Blender</td><td>Makes assets: 3D models, renders and pre-made animation clips. Not the live runtime.</td><td>Free</td><td>MCP for Blender (community, MIT). Claude runs Python in the open Blender scene and sees viewport screenshots and renders.</td><td>Scenes, materials, lighting, rendered stills and animations, exports to OBJ, FBX and glTF</td><td><span class="pill setup">Needs setup</span></td></tr>
+    <tr><td class="name">Unity</td><td>Runs the live world as a game-engine scene</td><td>Free Personal and Student plans; Unity’s own AI tools need a trial or subscription</td><td>Official Unity plugin for Claude Code (Unity 6 or later), or the free community MCP for Unity (Unity 2021.3 to 6.x)</td><td>Scenes, GameObjects, C# scripts; reads the console to fix its own errors</td><td><span class="pill less">Less likely</span></td></tr>
+  </table></div>
+  <p class="meta">A connector only works on the computer where the app is open. If Austin builds the world on his laptop, the connector and Claude Code need to be on his laptop.</p>
+</section>
+
+<section aria-labelledby="s2">
+  <div class="head"><p class="eyebrow">Part 2</p><h2 id="s2">How Claude would work in each</h2><p>For each tool: what the workflow looks like, what to install, and the limits.</p></div>
+  <div class="cards">
+
+    <div class="card"><div class="body">
+      <div class="top"><h3>p5.js</h3><span class="pill now">Works today</span></div>
+      <dl>
+        <dt>How it works</dt><dd>You describe what you want; Claude writes the sketch as files in our repo, opens it in a headless browser, takes screenshots and fixes what looks wrong. This is how our Nov 11 animation and Nov 13 hero shots were made.</dd>
+        <dt>Setup</dt><dd>None. To play it with the Arduino, open the page in Chrome or Edge.</dd>
+        <dt>Limits</dt><dd>Everything is code, so there is no visual editor for Austin to tweak by hand. Blender models can come in as OBJ or STL files. Our read: heavy 3D or tens of thousands of glowing particles may run slower than in TouchDesigner; a glow test would show this.</dd>
+        <dt>Optional extras</dt><dd>Two small community connectors exist (genart-mcp, p5js-ai-editor). Our read: we don’t need them, since Claude Code already edits and previews the files.</dd>
+      </dl>
+    </div></div>
+
+    <div class="card"><div class="body">
+      <div class="top"><h3>TouchDesigner</h3><span class="pill setup">Needs setup</span></div>
+      <dl>
+        <dt>How it works</dt><dd>With TouchDesigner open, Claude adds and connects nodes, sets their parameters, runs Python inside the project, reads node errors, and pulls a node’s image to see the result. The most-listed connector has 14 tools.</dd>
+        <dt>Setup</dt><dd><ol>
+          <li>Install TouchDesigner (free non-commercial) and Node.js (version 22.18 or later, or 24).</li>
+          <li>Download <code>touchdesigner-mcp-td.zip</code> from the project’s releases and drag <code>mcp_webserver_base.tox</code> into the project. Keep its folder intact.</li>
+          <li>In a terminal: <code>claude plugin marketplace add 8beeeaaat/touchdesigner-mcp</code> then <code>claude plugin install touchdesigner@touchdesigner-mcp</code></li>
+          <li>Run <code>/touchdesigner:setup</code> in Claude Code to confirm the connection.</li>
+        </ol></dd>
+        <dt>Limits</dt><dd>The app must be open while Claude works. The free version caps output at 1280 × 1280, which is below a 1080p-wide (1920) screen; full resolution needs the $300 Educational license. The connector can run any Python in the project, so save first. Other connectors exist (johnsabath, aliphi, a PyPI package); we have not compared them hands-on.</dd>
+        <dt>Arduino</dt><dd>Derivative’s guide covers Arduino through the Serial DAT. It warns that <code>println()</code> adds blank lines, and to switch the Serial DAT off while uploading a sketch.</dd>
+      </dl>
+    </div></div>
+
+    <div class="card"><div class="body">
+      <div class="top"><h3>Blender</h3><span class="pill setup">Needs setup</span></div>
+      <dl>
+        <dt>How it works</dt><dd>With Blender open, Claude runs Python in the live scene, reads a summary of the objects, and looks at the viewport, the camera view or a strip of animation frames to check its work. It can also pull free Poly Haven textures, HDRIs and models with no account.</dd>
+        <dt>Setup</dt><dd><ol>
+          <li>Install Blender (3.0 or newer) and uv (<code>brew install uv</code>).</li>
+          <li>In a terminal: <code>claude mcp add blender uvx mcp-for-blender</code></li>
+          <li>Then: <code>uvx mcp-for-blender install-addon</code></li>
+          <li>In Blender: Edit › Preferences › Add-ons, enable “MCP for Blender”. Press N in the 3D view, open the MCP tab, click Start MCP Server.</li>
+        </ol></dd>
+        <dt>Limits</dt><dd>Our read: Claude is good at scene setup, materials, lighting, cameras, batch renders and exports, and at simple procedural shapes. It is not a replacement for Austin’s hand-modeled plants or butterfly. The add-on runs any Python in Blender with no password, so save first and keep it on this computer only. AI model generators (Hyper3D, Hunyuan3D, Tripo, Meshy) and Sketchfab need their own accounts or keys.</dd>
+        <dt>Without the connector</dt><dd>Our read: Blender can also run a Python script from the terminal with no window, so Claude could write a script and render stills that way once Blender is installed.</dd>
+      </dl>
+    </div></div>
+
+    <div class="card"><div class="body">
+      <div class="top"><h3>Unity</h3><span class="pill less">Less likely</span></div>
+      <dl>
+        <dt>How it works</dt><dd>Claude reads the scene hierarchy, creates and edits GameObjects and components, writes C# scripts, and reads the console to fix errors.</dd>
+        <dt>Option A: official</dt><dd>Unity released a first-party plugin for Claude Code on Sept 9, 2026. It installs Unity’s skills, the Unity CLI and Unity’s MCP server. Unity’s MCP needs Unity 6 or later, a project connected to Unity Cloud, and an active trial or subscription to Unity’s AI tools.</dd>
+        <dt>Option B: community</dt><dd>MCP for Unity by CoplayDev is free (MIT), works with Unity 2021.3 through 6.x, needs Python 3.10+ with uv, and can set up Claude Code from a window inside Unity. It is not affiliated with Unity.</dd>
+        <dt>Limits</dt><dd>Largest install and the steepest learning curve. Our read from Nov 13 still holds: Unity’s defaults lean toward a realistic 3D look, not our glowing, layered style. Whether Unity’s AI tools are included for students is unverified; its pricing pages disagree.</dd>
+      </dl>
+    </div></div>
+
+  </div>
+</section>
+
+<section aria-labelledby="s3">
+  <div class="head"><p class="eyebrow">Part 3</p><h2 id="s3">How the tools could fit together</h2><p>Blender is a workshop; the other three are stages. One possible pipeline, not a decision:</p></div>
+  <div class="flow">
+    <div class="box s"><p class="eyebrow">Make assets</p><h3>Blender</h3><p>Austin models plants and the butterfly. Claude helps with materials, lighting, renders and exports.</p></div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="box"><p class="eyebrow">Run the live world</p><h3>p5.js or TouchDesigner</h3><p>Reads the Arduino, applies the balance rules, draws the world. Claude writes the code or builds the node network.</p></div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="box d"><p class="eyebrow">Show it</p><h3>TV or projection</h3><p>Full screen from the laptop.</p></div>
+  </div>
+  <div class="table-wrap"><table>
+    <tr><th>From Blender into…</th><th>File types</th><th>Note</th></tr>
+    <tr><td class="name">p5.js</td><td>OBJ, STL</td><td>From our Nov 13 technology research. Or use rendered images and image sequences as flat layers.</td></tr>
+    <tr><td class="name">TouchDesigner</td><td>FBX, OBJ</td><td>From our Nov 13 technology research (FBX COMP).</td></tr>
+    <tr><td class="name">Unity</td><td>FBX</td><td>Our read: this is the standard Blender-to-Unity route Austin already tried.</td></tr>
+  </table></div>
+</section>
+
+<section aria-labelledby="s4">
+  <div class="callout">
+    <p class="eyebrow">Suggested next step</p>
+    <h2 id="s4">A glow test with Claude doing the building</h2>
+    <ol>
+      <li><b>p5.js (today):</b> Claude builds one small scene: a barren patch that blooms and glows as two mouse-driven “elements” come into balance.</li>
+      <li><b>TouchDesigner (after the 15-minute setup):</b> Claude builds the same scene as a node network through the connector.</li>
+      <li><b>Compare:</b> the look of the glow, how smooth it runs, how easy it is for Austin to adjust by hand, and how well Claude could build in each.</li>
+      <li><b>Blender (optional):</b> install the connector on Austin’s laptop and try one task, such as lighting and rendering his plant model in barren and blooming versions.</li>
+    </ol>
+    <p class="meta">This matches the glow test already in our Timeline V2 (“Choice of display tool”, before winter break).</p>
+  </div>
+</section>
+
+<section aria-labelledby="s5">
+  <div class="head"><p class="eyebrow">Part 4</p><h2 id="s5">What we could not confirm</h2></div>
+  <ul class="plain">
+    <li>Latest version numbers and release dates for the Blender and TouchDesigner connectors. Their pages did not show them.</li>
+    <li>The minimum TouchDesigner version for the connector. Its guide says only “latest version recommended.”</li>
+    <li>Whether the TouchDesigner 1280 × 1280 non-commercial cap is unchanged. It comes from our Nov 13 check of Derivative’s licensing page.</li>
+    <li>Whether Unity’s AI tools and official MCP are included with the free Student or Personal plans. One page lists a 14-day trial for Personal; others differ.</li>
+    <li>A third-party guide says Unity’s MCP server may be replaced by the Unity CLI. Unity’s own pages still describe it as current.</li>
+    <li>We have not installed or run any of the three connectors. Everything about them here is from their documentation.</li>
+  </ul>
+</section>
+
+<section class="sources" aria-labelledby="src">
+  <div class="head"><p class="eyebrow">Sources</p><h2 id="src">Where this came from</h2></div>
+  <ol>
+    <li><a href="https://github.com/ahujasid/blender-mcp">MCP for Blender (ahujasid), GitHub README</a></li>
+    <li><a href="https://github.com/8beeeaaat/touchdesigner-mcp">TouchDesigner MCP (8beeeaaat), GitHub README</a> and its <a href="https://github.com/8beeeaaat/touchdesigner-mcp/blob/main/docs/installation.md">installation guide</a></li>
+    <li><a href="https://github.com/johnsabath/touchdesigner-mcp">TouchDesigner MCP (johnsabath)</a> and <a href="https://github.com/aliphi/touchdesigner-mcp">TouchDesigner MCP (aliphi)</a></li>
+    <li><a href="https://derivative.ca/UserGuide/Arduino">Derivative: Arduino in TouchDesigner</a> and <a href="https://derivative.ca/UserGuide/Licensing">Derivative: Licensing</a></li>
+    <li><a href="https://unity.com/blog/unity-ai-mcp-how-to-get-started">Unity: How to get started with MCP</a></li>
+    <li><a href="https://unity.com/blog/unity-plugin-for-claude-code">Unity: Official Unity Plugin for Claude Code</a></li>
+    <li><a href="https://github.com/CoplayDev/unity-mcp">MCP for Unity (CoplayDev)</a></li>
+    <li><a href="https://unity.com/products">Unity: Plans and pricing</a></li>
+    <li><a href="https://www.pkgstats.com/pkg:p5js-ai-editor">p5js-ai-editor</a> and <a href="https://glama.ai/mcp/servers/ra21vzt6ns">genart-mcp listing</a></li>
+    <li>Our own pages: <a href="https://claude.ai/artifact/P9p1jv3v32bVQwy3mt4kBN">MetamorphUs Technology Research (Nov 13)</a></li>
+  </ol>
+</section>
+
+</div>
+</body>
+</html>

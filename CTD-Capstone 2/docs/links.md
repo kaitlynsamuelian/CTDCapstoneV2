@@ -49,6 +49,7 @@ These live online at claude.ai (private to Kaitlyn unless shared). Listed oldest
 - [MetamorphUs: Capstone Proposal Presentation](https://claude.ai/artifact/TkqXtZZ6X44ZzAqWZ7hT9z) (Nov 13, updated): 19-slide pitch deck with speaker-note script; `[X]` and bracket placeholders for anything not yet decided.
 - [MetamorphUs Precedents](https://claude.ai/artifact/LGZw3BPmUsR6aa8cANnUJo) (Nov 13, shared publicly): 15 sourced precedents in 5 groups (6 in slides), plus loneliness and synchrony research. Handwritten-notes style.
 - [MetamorphUs Technology Research](https://claude.ai/artifact/P9p1jv3v32bVQwy3mt4kBN) (Nov 13, feasibility test 4): A physical controllers, B no playing alone, C connection and logic, D display; hands-on checks. Handwritten-notes style.
+- [MetamorphUs Display Tools and Claude Workflows](https://claude.ai/artifact/DzWze3KRTKfQXRv3Y19Yr6) (Nov 15): p5.js, TouchDesigner, Blender and Unity compared, and how Claude can build files, animations and renders in each (connectors, setup steps, limits). Private until shared. Source: `Research/Display-Tools-and-Claude-Workflows-2026-11-15.html`. Handwritten-notes style.
 
 ## Local notes (Markdown files in this repo)
 Project management
@@ -84,5 +85,6 @@ Testing and templates
 ## Local builds (code, wiring guides, animations)
 - [Cooperative button test](../Development/Cooperative-Button-Test-V1/README.md): 3-button and 2-button Arduino sketches, step-by-step wiring images (V2 three buttons, V3 two buttons).
 - [MetamorphUs Arduino test](../Development/MetamorphUs-Arduino-Test-V1/README.md): knobs + Bloom button to the p5.js ecosystem over Web Serial.
+- [Glow test V1 (p5.js + Arduino)](../Development/Glow-Test-p5-V1/README.md) (Nov 15): two-element glowing world driven by our two-button circuit; the p5.js half of the display-tool glow test. Built; not yet tested with the Arduino.
 - [Ecosystem Engine animation](../Media/animations-2026-11-11/ecosystem-engine-dot-lock.html) (Nov 11): barren to glowing forest to flower butterfly; open in Chrome, Record video for MP4. Add `?clean=1` for stills without meters or captions.
 - [Renderings, Nov 13](../Media/renderings-2026-11-13/CAPTIONS.md): system diagram, hero shots (barren, glowing forest, butterfly, installation scene), installation in the space (TV vs projection), each with a caption.
