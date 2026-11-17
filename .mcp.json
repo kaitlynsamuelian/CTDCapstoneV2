@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "touchdesigner": {
+      "type": "stdio",
+      "command": "/opt/homebrew/opt/node@24/bin/npx",
+      "args": [
+        "-y",
+        "touchdesigner-mcp-server@latest",
+        "--stdio"
+      ],
+      "env": {
+        "PATH": "/opt/homebrew/opt/node@24/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+      }
+    }
+  }
+}

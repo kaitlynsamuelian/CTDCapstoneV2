@@ -1,0 +1,113 @@
+METAMORPHUS · KAITLYN'S PRESENTATION SCRIPT
+Capstone proposal · Nov 2026
+Total speaking time: about 3 minutes 5 seconds
+
+======================================================================
+SLIDE 2 · MEET THE TEAM (my line, about 7 seconds)
+======================================================================
+
+I'm Kaitlyn. I'm the project lead, and I handle the controls and code:
+planning and coordination, the Arduino circuits, helping build the
+TouchDesigner logic and visuals, and making it all work together.
+
+
+======================================================================
+SLIDE 3 · THE ELEVATOR PITCH (about 20 seconds)
+======================================================================
+
+Here's MetamorphUs in one breath. It's an interactive installation where
+strangers use physical controllers, like a sun crank or a water pump, to
+bring a dying digital ecosystem back to life.
+
+No one can do it alone. Only when the group keeps sunlight, water, wind,
+heat and nutrients in balance together does the whole world transform
+into a glowing butterfly.
+
+
+======================================================================
+SLIDE 9 · PRECEDENT 3: HOT SWAP (about 40 seconds)
+(The new slide right after the old alt.ctrl.GDC slide)
+======================================================================
+
+Our third precedent is HOT SWAP: All Hands On Deck, from alt.ctrl.GDC, a
+showcase of games with custom physical controllers. Two players fly a
+ship using five magnetic, 3D-printed inputs but only four slots, so one
+piece is always out of play and they have to hand pieces to each other
+mid-game.
+
+In playtests, some people set pieces out for their partner, and others
+reached across to grab what they needed, which is the kind of contact we
+want between strangers. It's built with an Arduino Micro, plus pogo pins
+and custom circuit boards for each piece.
+
+The game starts calm, with about one enemy every 10 seconds, so players
+learn the controls and each other first. One of the makers says his favorite
+moment is when a perfectly coordinated team falls into chaos once the
+ship catches fire. For us, that means our surprise events should come
+after a group has found its rhythm.
+
+Where it stops short is scale: it's a two-player game. Our challenge is
+four to five strangers.
+
+
+======================================================================
+SLIDE 11 · TECHNICAL TEST: ARDUINO BUTTONS (about 20 seconds)
+======================================================================
+
+My first technical test was really simple. It only tested two things:
+can an Arduino tell when two people press at the same time, and does a
+small light help people figure that out on their own?
+
+Two buttons, a red light for "half right," and a green light for success.
+Successful presses landed 16 to 46 milliseconds apart, and our peer Mia
+figured out she had to press both together within seconds, with no
+instructions except "light the green LED."
+
+That was the first iteration. I'll show you where I took it next in a
+second.
+
+   [Optional, if you have time: "We also learned to check our wiring.
+   At first both buttons read as always pressed until we turned them."]
+
+
+======================================================================
+SLIDE 13 · TECHNICAL TEST: GLOW TEST (about 45 seconds)
+======================================================================
+
+For the second iteration, I took that same two-button circuit and
+connected it to a glowing digital world. I built the same small scene
+twice, once in p5.js and once in TouchDesigner.
+
+Holding a button raises an element, like sunlight or water, and letting
+go drains it, so two people have to keep both in the sweet spot. Hold the
+balance for six seconds, and the lights gather into a butterfly. Both
+versions worked live with the same circuit and the same Arduino code.
+
+I really liked working in TouchDesigner. Its node-based interface makes
+it easy to see how everything connects, and it has a huge range of
+operators that each do something different, plus built-in effects and
+lots of ways to connect to microcontrollers and other tools. That makes
+it a strong fit for MetamorphUs, so it's our leading choice. I'm going to
+keep learning it and testing ideas in it, which will help us a lot next
+semester.
+
+
+======================================================================
+SLIDE 14 · TECHNOLOGY RESEARCH (about 15 seconds)
+======================================================================
+
+Our research covers every layer, from a person's hands to the glowing
+world. For sensing, we're starting with simple inputs like knobs,
+buttons and cranks. An Arduino sends those to our software, and after
+our glow test, TouchDesigner is our leading choice. For display, we'll
+start with a large screen and explore projection, lights and sound.
+
+
+======================================================================
+SLIDE 17 · DOMAINS OF INTEREST (about 15 seconds)
+======================================================================
+
+MetamorphUs sits where social connection, collective play and nature
+meet interactive art. On the tools side, it's physical computing meeting
+creative coding: Arduino and sensors, TouchDesigner for the world,
+fabrication for the controllers, and a big screen with light and sound.
